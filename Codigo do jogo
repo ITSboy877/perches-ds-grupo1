@@ -1,0 +1,59 @@
+import pygame as pg 
+
+pg.init()
+
+#define todos os parametros da tela e cria ela 
+largura = 800
+altura = 600
+tela = pg.display.set_mode((largura, altura))
+pg.display.set_caption("Jogo Amostra")
+relogio = pg.time.Clock()
+
+x = 100
+y = 400 
+
+#cria um loop para a tela ficar infinita e feichar 
+rodando = True
+while rodando:
+    for evento in pg.event.get():
+        if evento.type == pg.QUIT:
+            rodando = False
+    
+    tecla = pg.key.get_pressed()
+    if tecla[pg.K_LEFT] or tecla[pg.K_a]:
+        x -= 10
+    if tecla[pg.K_RIGHT] or tecla[pg.K_d]:
+        x += 10
+    if tecla[pg.K_UP] or tecla[pg.K_w]:
+        y -= 20
+    if tecla[pg.K_DOWN] or tecla[pg.K_s]:
+        y += 20
+        
+    tela.fill((0, 0, 0))
+    pg.draw.rect(tela, (0, 255, 0), (x, y, 40, 60))
+    pg.display.flip()
+    relogio.tick(60)
+
+pg.quit()
+
+#cria a class dos personagens
+class Personagem:
+    def __init__(self, nome, x, y, velocidade, pulo, dano, vida, arma):
+        self.nome = nome
+        self.x = x
+        self.y = y
+        self.velocidade = velocidade
+        self.pulo = pulo
+        self.dano = dano
+        self.vida = vida
+        self.arma = arma
+
+#definicoes de cada um
+gui = Personagem("Gui", 100, 400, velocidade=10, pulo=-20, dano=10, vida=100)
+dias = Personagem("Dias", 100, 400, velocidade=4, pulo=-10, dano=18, vida=150)
+pedro = Personagem("Pedro", 100, 400, velocidade=8, pulo=-15, dano=10, vida=100)
+diego = Personagem("Diego", 100, 400, velocidade=6, pulo=-15, dano=8, vida=80)
+
+
+
+
