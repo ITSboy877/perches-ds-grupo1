@@ -1,59 +1,532 @@
-import pygame as pg 
+import pygame as pg
+import os
+import menu_selecao
 
 pg.init()
 
-#define todos os parametros da tela e cria ela 
-largura = 800
-altura = 600
-tela = pg.display.set_mode((largura, altura))
-pg.display.set_caption("Jogo Amostra")
+# Configurações gerais
+LARGURA = 1200
+ALTURA = 800
+FPS = 75
+PASTA_IMAGENS = os.path.join(os.path.dirname(__file__), "Desenhos 2d")
+ESCALA_JOGADOR = 2.0
+ESCALA_MINIATURA = 1.8
+DEBUG = False
+
+# Inicialização da tela
+tela = pg.display.set_mode((LARGURA, ALTURA))
+pg.display.set_caption("Nome do jogo")
 relogio = pg.time.Clock()
 
-x = 100
-y = 400 
+# Estado de fullscreen
+tela_em_tela_cheia = False
+ORIG_LARGURA = LARGURA
+ORIG_ALTURA = ALTURA
 
-#cria um loop para a tela ficar infinita e feichar 
+# =============== FUNÇÕES AUXILIARES ===============
+def caminho_imagem_para(nome):
+    try:
+        arquivos = os.listdir(PASTA_IMAGENS)
+    except Exception:
+        return None
+    for ext in ('.png', '.jpg', '.jpeg', '.webp'):  
+        for f in arquivos:
+            if nome.lower() in f.lower() and f.lower().endswith(ext):
+                return os.path.join(PASTA_IMAGENS, f)
+    for f in arquivos:
+        if nome.lower() in f.lower() and f.lower().endswith('.gif'):
+            return os.path.join(PASTA_IMAGENS, f)
+    for ext in ('.png', '.jpg', '.jpeg', '.webp', '.gif'):
+        p = os.path.join(PASTA_IMAGENS, f"{nome}{ext}")
+        if os.path.exists(p):
+            return p
+        p2 = os.path.join(PASTA_IMAGENS, f"{nome.lower()}{ext}")
+        if os.path.exists(p2):
+            return p2
+    return None
+
+def carregar_imagem(caminho, usar_alpha=True):
+    try:
+        if usar_alpha:
+            return pg.image.load(caminho).convert_alpha()
+        return pg.image.load(caminho)
+    except Exception:
+        return None
+
+def carregar_frames_gif_pillow(caminho):
+    try:
+        from PIL import Image
+    except Exception:
+        return []
+    frames = []
+    try:
+        pil_img = Image.open(caminho)
+        i = 0
+        while True:
+            try:
+                pil_img.seek(i)
+            except EOFError:
+                break
+            frame = pil_img.convert('RGBA')
+            size = frame.size
+            data = frame.tobytes()
+            surf = pg.image.fromstring(data, size, 'RGBA')
+            frames.append(surf)
+            i += 1
+    except Exception:
+        return []
+    return frames
+
+# =============== CARREGAMENTO DE ASSETS ===============
+bg_path = caminho_imagem_para('bg') or os.path.join(PASTA_IMAGENS, 'bg.png')
+base_path = caminho_imagem_para('base') or os.path.join(PASTA_IMAGENS, 'base.png')
+imagem_bg_orig = carregar_imagem(bg_path) or pg.Surface((ORIG_LARGURA, ORIG_ALTURA))
+imagem_base_orig = carregar_imagem(base_path) or pg.Surface((200, 40))
+
+def alternar_fullscreen():
+    global tela_em_tela_cheia, tela, LARGURA, ALTURA, imagem_bg, imagem_base, base_largura, base_altura
+    tela_em_tela_cheia = not tela_em_tela_cheia
+    if tela_em_tela_cheia:
+        info = pg.display.Info()
+        new_w, new_h = info.current_w, info.current_h
+        tela = pg.display.set_mode((new_w, new_h), pg.FULLSCREEN)
+    else:
+        new_w, new_h = ORIG_LARGURA, ORIG_ALTURA
+        tela = pg.display.set_mode((new_w, new_h))
+    LARGURA, ALTURA = new_w, new_h
+    try:
+        imagem_bg = pg.transform.scale(imagem_bg_orig, (LARGURA, ALTURA))
+    except Exception:
+        imagem_bg = pg.Surface((LARGURA, ALTURA))
+    try:
+        factor = LARGURA / ORIG_LARGURA
+        bw = max(1, int(imagem_base_orig.get_width() * factor))
+        bh = max(1, int(imagem_base_orig.get_height() * factor))
+        imagem_base = pg.transform.scale(imagem_base_orig, (bw, bh))
+    except Exception:
+        imagem_base = pg.Surface((200, 40))
+    base_largura, base_altura = imagem_base.get_size()
+
+# Aplica resolução inicial
+imagem_bg = pg.transform.scale(imagem_bg_orig, (LARGURA, ALTURA))
+factor = LARGURA / ORIG_LARGURA
+bw = max(1, int(imagem_base_orig.get_width() * factor))
+bh = max(1, int(imagem_base_orig.get_height() * factor))
+imagem_base = pg.transform.scale(imagem_base_orig, (bw, bh))
+base_largura, base_altura = imagem_base.get_size()
+
+# =============== CLASSE PERSONAGEM ===============
+class Personagem:
+    def __init__(self, nome, velocidade, pulo):
+        self.nome = nome
+        self.x = 100
+        self.y = 0
+        self.velocidade = velocidade
+        self.forca_pulo = pulo
+        self.vel_y = 0
+        self.no_chao = False
+        self.facing_direita = True
+
+# =============== PERSONAGENS ===============
+gui = Personagem('Gui', velocidade=10, pulo=22)
+dias = Personagem('Dias', velocidade=4, pulo=14)
+pedro = Personagem('Pedro', velocidade=8, pulo=18)
+diego = Personagem('Diego', velocidade=6, pulo=16)
+personagens = [gui, dias, pedro, diego]
+
+# =============== MINIATURAS ===============
+miniaturas = {}
+for p in personagens:
+    caminho = caminho_imagem_para(p.nome)
+    surf = carregar_imagem(caminho) if caminho else None
+    if surf:
+        w, h = surf.get_size()
+        nw = max(1, int(w * ESCALA_MINIATURA))
+        nh = max(1, int(h * ESCALA_MINIATURA))
+        surf = pg.transform.scale(surf, (nw, nh))
+    miniaturas[p.nome] = surf
+
+paredes = []
+fonte = pg.font.SysFont(None, 36)
+pequena = pg.font.SysFont(None, 20)
+
+# =============== FUNÇÃO AUXILIAR: QUEBRAR TEXTO ===============
+def quebrar_texto(texto, fonte, max_largura):
+    palavras = texto.split()
+    linhas = []
+    linha_atual = ""
+    for palavra in palavras:
+        teste = linha_atual + " " + palavra if linha_atual else palavra
+        if fonte.size(teste)[0] <= max_largura:
+            linha_atual = teste
+        else:
+            if linha_atual:
+                linhas.append(linha_atual)
+            linha_atual = palavra
+    if linha_atual:
+        linhas.append(linha_atual)
+    return linhas
+
+# =============== MENU PRINCIPAL ===============
+def menu_principal():
+    while True:
+        for ev in pg.event.get():
+            if ev.type == pg.QUIT:
+                pg.quit()
+                raise SystemExit
+            if ev.type == pg.MOUSEBUTTONDOWN and ev.button == 1:
+                mx, my = ev.pos
+                if pg.Rect(LARGURA//2 - 100, ALTURA//2 - 50, 200, 50).collidepoint(mx, my):
+                    return
+                if pg.Rect(LARGURA//2 - 100, ALTURA//2 + 20, 200, 50).collidepoint(mx, my):
+                    pg.quit()
+                    raise SystemExit
+
+        tela.blit(imagem_bg, (0, 0))
+        titulo = pg.font.SysFont("Arial", 72, bold=True).render("Nome do jogo", True, (255, 215, 0))
+        tela.blit(titulo, (LARGURA//2 - titulo.get_width()//2, 100))
+
+        jogar_rect = pg.Rect(LARGURA//2 - 100, ALTURA//2 - 50, 200, 50)
+        sair_rect = pg.Rect(LARGURA//2 - 100, ALTURA//2 + 20, 200, 50)
+        mx, my = pg.mouse.get_pos()
+        cor_jogar = (100, 200, 100) if jogar_rect.collidepoint((mx, my)) else (80, 160, 80)
+        cor_sair = (200, 100, 100) if sair_rect.collidepoint((mx, my)) else (160, 80, 80)
+
+        pg.draw.rect(tela, cor_jogar, jogar_rect, border_radius=8)
+        pg.draw.rect(tela, cor_sair, sair_rect, border_radius=8)
+
+        txt_jogar = pg.font.SysFont("Arial", 32, bold=True).render("Jogar", True, (0, 0, 0))
+        txt_sair = pg.font.SysFont("Arial", 32, bold=True).render("Sair", True, (0, 0, 0))
+        tela.blit(txt_jogar, (LARGURA//2 - txt_jogar.get_width()//2, ALTURA//2 - 35))
+        tela.blit(txt_sair, (LARGURA//2 - txt_sair.get_width()//2, ALTURA//2 + 35))
+
+        pg.display.flip()
+        relogio.tick(FPS)
+
+# =============== MENU DE SELEÇÃO DE PERSONAGEM ===============
+def menu_selecao():
+    TAMANHO_THUMB = (160, 160)
+    ESPACO_TOTAL = len(personagens) * (TAMANHO_THUMB[0] + 40) - 40
+    X_INICIAL = (LARGURA - ESPACO_TOTAL) // 2
+    Y_THUMB = 280
+
+    miniaturas_fixas = {}
+    for p in personagens:
+        surf = miniaturas.get(p.nome)
+        if surf:
+            try:
+                surf = pg.transform.scale(surf, TAMANHO_THUMB)
+            except:
+                surf = None
+        if not surf:
+            surf = pg.Surface(TAMANHO_THUMB)
+            surf.fill((50, 50, 50))
+            nome_txt = pequena.render(p.nome[:10], True, (255, 255, 255))
+            surf.blit(nome_txt, (TAMANHO_THUMB[0]//2 - nome_txt.get_width()//2, TAMANHO_THUMB[1]//2 - nome_txt.get_height()//2))
+        miniaturas_fixas[p.nome] = surf
+
+    historias = {
+        "Gui": "Tentará salvar a Yasmin das garras do chefe.",
+        "Pedro": "Tentará salvar a Ana antes que seja tarde demais.",
+        "Dias": "Tentará resgatar a Manu da fortaleza inimiga.",
+        "Diego": "Tentará roubar o trono do chefe e tomar o poder!"
+    }
+    habilidades = {
+        "Gui": "Ágil e Poder De Raios",
+        "Pedro": "Smoke bomb e velocidade de ataque",
+        "Dias": "Tanque: mais vida e mais dano",
+        "Diego": "Furtivo e dispara Kamehameha"
+    }
+    armas = {
+        "Gui": "Katana",
+        "Pedro": "Florete",
+        "Dias": "Clava / Machado do Escanor",
+        "Diego": "Revolver 38"
+    }
+
+    while True:
+        mx, my = pg.mouse.get_pos()
+        for ev in pg.event.get():
+            if ev.type == pg.QUIT:
+                pg.quit()
+                raise SystemExit
+            if ev.type == pg.MOUSEBUTTONDOWN and ev.button == 1:
+                for i, p in enumerate(personagens):
+                    x = X_INICIAL + i * (TAMANHO_THUMB[0] + 40)
+                    rect = pg.Rect(x, Y_THUMB, TAMANHO_THUMB[0], TAMANHO_THUMB[1])
+                    if rect.collidepoint(mx, my):
+                        # Entra na tela de confirmação
+                        while True:
+                            tela.blit(imagem_bg, (0, 0))
+                            titulo_jogo = pg.font.SysFont("Arial", 48, bold=True).render("Nome do jogo", True, (255, 215, 0))
+                            tela.blit(titulo_jogo, (LARGURA//2 - titulo_jogo.get_width()//2, 20))
+
+                            tit = pg.font.SysFont("Arial", 44, bold=True).render(p.nome.upper(), True, (255, 255, 255))
+                            tela.blit(tit, (LARGURA//2 - tit.get_width()//2, 80))
+
+                            img_grande = miniaturas_fixas[p.nome]
+                            tela.blit(img_grande, (LARGURA//2 - img_grande.get_width()//2, 140))
+
+                            info_x, info_y = 80, 380
+                            info_w = LARGURA - 160
+                            info_h = 260
+                            fundo_info = pg.Surface((info_w, info_h), pg.SRCALPHA)
+                            fundo_info.fill((0, 0, 0, 190))
+                            tela.blit(fundo_info, (info_x, info_y))
+
+                            fonte_label = pg.font.SysFont("Arial", 22, bold = True)
+                            fonte_texto = pg.font.SysFont("Arial", 20)
+
+                            secoes = [
+                                ("HISTÓRIA", historias[p.nome]),
+                                ("HABILIDADE", habilidades[p.nome]),
+                                ("ARMA", armas[p.nome])
+                            ]
+
+                            y = info_y + 20
+                            for label, texto in secoes:
+                                lbl = fonte_label.render(label + ":", True, (173, 216, 230))
+                                tela.blit(lbl, (info_x + 20, y))
+                                y += 28
+                                linhas = quebrar_texto(texto, fonte_texto, info_w - 40)
+                                for l in linhas:
+                                    txt = fonte_texto.render(l, True, (240, 240, 240))
+                                    tela.blit(txt, (info_x + 20, y))
+                                    y += 26
+                                y += 10
+
+                            jogar_rect = pg.Rect(LARGURA//2 - 130, ALTURA - 140, 260, 50)
+                            voltar_rect = pg.Rect(LARGURA//2 - 130, ALTURA - 70, 260, 50)
+                            mouse_pos = pg.mouse.get_pos()
+                            cor_jogar = (70, 180, 70) if jogar_rect.collidepoint(mouse_pos) else (50, 140, 50)
+                            cor_voltar = (70, 100, 200) if voltar_rect.collidepoint(mouse_pos) else (50, 80, 160)
+                            pg.draw.rect(tela, cor_jogar, jogar_rect, border_radius=10)
+                            pg.draw.rect(tela, cor_voltar, voltar_rect, border_radius=10)
+                            txt_jogar = pg.font.SysFont("Arial", 26, bold = True).render(f"JOGAR COM {p.nome.upper()}", True, (255, 255, 255))
+                            txt_voltar = pg.font.SysFont("Arial", 26, bold = True).render("VOLTAR", True, (255, 255, 255))
+                            tela.blit(txt_jogar, (LARGURA//2 - txt_jogar.get_width()//2, ALTURA - 140 + 12))
+                            tela.blit(txt_voltar, (LARGURA//2 - txt_voltar.get_width()//2, ALTURA - 70 + 12))
+
+                            pg.display.flip()
+
+                            # Processa eventos DENTRO da tela de confirmação
+                            for e in pg.event.get():
+                                if e.type == pg.QUIT:
+                                    pg.quit()
+                                    raise SystemExit
+                                if e.type == pg.MOUSEBUTTONDOWN and e.button == 1:
+                                    if jogar_rect.collidepoint(e.pos):
+                                        return p  # Sai da função inteira → começa o jogo
+                                    if voltar_rect.collidepoint(e.pos):
+                                        # Sai APENAS da tela de confirmação → volta ao menu
+                                        break
+                            else:
+                                # Se NÃO clicou em "VOLTAR", continua no loop
+                                continue
+                            # Se clicou em "VOLTAR", sai do loop interno
+                            break
+
+        # Desenha menu de seleção (sempre que não estiver na tela de confirmação)
+        tela.blit(imagem_bg, (0, 0))
+        titulo = pg.font.SysFont("Arial", 56, bold=True).render('selecione em um personagem', True, (255, 255, 255))
+        tela.blit(titulo, (LARGURA//2 - titulo.get_width()//2, 80))
+
+        for i, p in enumerate(personagens):
+            x = X_INICIAL + i * (TAMANHO_THUMB[0] + 40)
+            thumb = miniaturas_fixas[p.nome]
+            tela.blit(thumb, (x, Y_THUMB))
+            nome_txt = pequena.render(p.nome, True, (255, 255, 255))
+            tela.blit(nome_txt, (x + TAMANHO_THUMB[0]//2 - nome_txt.get_width()//2, Y_THUMB + TAMANHO_THUMB[1] + 8))
+
+        pg.display.flip()
+        relogio.tick(FPS)
+
+# =============== MENU DE PAUSA ===============
+def pausar_menu():
+    opcao = None
+    itens = ['Continuar', 'Voltar ao início', 'Sair']
+    sel = 0
+    while opcao is None:
+        for ev in pg.event.get():
+            if ev.type == pg.QUIT:
+                return 'sair'
+            if ev.type == pg.KEYDOWN:
+                if ev.key == pg.K_ESCAPE:
+                    return 'continuar'
+                if ev.key == pg.K_UP or ev.key == pg.K_w:
+                    sel = max(0, sel - 1)
+                if ev.key == pg.K_DOWN or ev.key == pg.K_s:
+                    sel = min(len(itens) - 1, sel + 1)
+                if ev.key == pg.K_RETURN or ev.key == pg.K_SPACE:
+                    escolha = itens[sel]
+                    if escolha == 'Continuar':
+                        return 'continuar'
+                    if escolha == 'Voltar ao início':
+                        return 'reiniciar'
+                    if escolha == 'Sair':
+                        return 'sair'
+            if ev.type == pg.MOUSEBUTTONDOWN and ev.button == 1:
+                mx, my = ev.pos
+                cx = LARGURA // 2 - 120
+                cy = ALTURA // 2 - 60
+                for i, it in enumerate(itens):
+                    r = pg.Rect(cx, cy + i * 50, 240, 40)
+                    if r.collidepoint(mx, my):
+                        if it == 'Continuar':
+                            return 'continuar'
+                        if it == 'Voltar ao início':
+                            return 'reiniciar'
+                        if it == 'Sair':
+                            return 'sair'
+
+        tela.blit(imagem_bg, (0, 0))
+        s = pg.Surface((LARGURA, ALTURA), pg.SRCALPHA)
+        s.fill((0, 0, 0, 160))
+        tela.blit(s, (0, 0))
+        titulo = fonte.render('Pausado', True, (255, 255, 255))
+        tela.blit(titulo, (LARGURA // 2 - titulo.get_width() // 2, ALTURA // 2 - 140))
+        cx = LARGURA // 2 - 120
+        cy = ALTURA // 2 - 60
+        for i, it in enumerate(itens):
+            r = pg.Rect(cx, cy + i * 50, 240, 40)
+            color = (180, 180, 255) if i == sel else (120, 120, 120)
+            pg.draw.rect(tela, color, r)
+            txt = pequena.render(it, True, (0, 0, 0))
+            tela.blit(txt, (r.x + (r.width - txt.get_width()) // 2, r.y + (r.height - txt.get_height()) // 2))
+
+        pg.display.flip()
+        relogio.tick(FPS)
+
+# =============== INÍCIO DO JOGO ===============
+menu_principal()
+player = menu_selecao()
+
+# Preparar imagem do jogador
+player_caminho = caminho_imagem_para(player.nome)
+player_img = carregar_imagem(player_caminho) if player_caminho else None
+player_frames = []
+if player_caminho and player_caminho.lower().endswith('.gif'):
+    player_frames = carregar_frames_gif_pillow(player_caminho)
+    if player_frames:
+        player_frames = [pg.transform.scale(f, (int(player_frames[0].get_width() * ESCALA_JOGADOR), int(player_frames[0].get_height() * ESCALA_JOGADOR))) for f in player_frames]
+
+if not player_img and player_frames:
+    player_img = player_frames[0]
+if player_img:
+    player_img = pg.transform.scale(player_img, (int(player_img.get_width() * ESCALA_JOGADOR), int(player_img.get_height() * ESCALA_JOGADOR)))
+
+player.x = 100
+player.y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
+player.vel_y = 0
+player.no_chao = True
+
+# =============== LOOP PRINCIPAL ===============
+indice_frame = 0
+temporizador_frame = 0
+ATRASO_FRAME = 6
+GRAVIDADE = 1.2
+
 rodando = True
 while rodando:
-    for evento in pg.event.get():
-        if evento.type == pg.QUIT:
+    for ev in pg.event.get():
+        if ev.type == pg.QUIT:
             rodando = False
-    
-    tecla = pg.key.get_pressed()
-    if tecla[pg.K_LEFT] or tecla[pg.K_a]:
-        x -= 10
-    if tecla[pg.K_RIGHT] or tecla[pg.K_d]:
-        x += 10
-    if tecla[pg.K_UP] or tecla[pg.K_w]:
-        y -= 20
-    if tecla[pg.K_DOWN] or tecla[pg.K_s]:
-        y += 20
-        
-    tela.fill((0, 0, 0))
-    pg.draw.rect(tela, (0, 255, 0), (x, y, 40, 60))
+        if ev.type == pg.KEYDOWN:
+            if ev.key == pg.K_F11:
+                alternar_fullscreen()
+            if ev.key == pg.K_ESCAPE:
+                acao = pausar_menu()
+                if acao == 'sair':
+                    rodando = False
+                    break
+                if acao == 'reiniciar':
+                    menu_principal()
+                    player = menu_selecao()
+                    player_caminho = caminho_imagem_para(player.nome)
+                    player_img = carregar_imagem(player_caminho) if player_caminho else None
+                    player_frames = []
+                    if player_caminho and player_caminho.lower().endswith('.gif'):
+                        player_frames = carregar_frames_gif_pillow(player_caminho)
+                        if player_frames:
+                            player_frames = [pg.transform.scale(f, (int(player_frames[0].get_width() * ESCALA_JOGADOR), int(player_frames[0].get_height() * ESCALA_JOGADOR))) for f in player_frames]
+                    if not player_img and player_frames:
+                        player_img = player_frames[0]
+                    if player_img:
+                        player_img = pg.transform.scale(player_img, (int(player_img.get_width() * ESCALA_JOGADOR), int(player_img.get_height() * ESCALA_JOGADOR)))
+                    player.x = 100
+                    player.y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
+                    player.vel_y = 0
+                    player.no_chao = True
+                    indice_frame = 0
+                    temporizador_frame = 0
+
+    keys = pg.key.get_pressed()
+    moving = False
+    novo_x = player.x
+    if keys[pg.K_LEFT] or keys[pg.K_a]:
+        novo_x -= player.velocidade
+        moving = True
+        player.facing_direita = False
+    if keys[pg.K_RIGHT] or keys[pg.K_d]:
+        novo_x += player.velocidade
+        moving = True
+        player.facing_direita = True
+
+    largura_jog = player_img.get_width() if player_img else 40
+    altura_jog = player_img.get_height() if player_img else 60
+    novo_rect = pg.Rect(int(novo_x), int(player.y), largura_jog, altura_jog)
+    colisao_com_parede = False
+    for parede in paredes:
+        if novo_rect.colliderect(parede):
+            colisao_com_parede = True
+            break
+
+    if not colisao_com_parede:
+        if novo_x < 0:
+            novo_x = 0
+        if novo_x + largura_jog > LARGURA:
+            novo_x = LARGURA - largura_jog
+        player.x = novo_x
+
+    if (keys[pg.K_UP] or keys[pg.K_w] or keys[pg.K_SPACE]) and player.no_chao:
+        player.vel_y = -player.forca_pulo
+        player.no_chao = False
+
+    player.vel_y += GRAVIDADE
+    player.y += player.vel_y
+    ground_y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
+    if player.y >= ground_y:
+        player.y = ground_y
+        player.vel_y = 0
+        player.no_chao = True
+
+    if player_frames and moving:
+        temporizador_frame += 1
+        if temporizador_frame >= ATRASO_FRAME:
+            temporizador_frame = 0
+            indice_frame = (indice_frame + 1) % len(player_frames)
+            player_img = player_frames[indice_frame]
+    elif player_frames and not moving:
+        player_img = player_frames[0]
+
+    tela.blit(imagem_bg, (0,0))
+    x_rep = 0
+    while x_rep < LARGURA:
+        tela.blit(imagem_base, (x_rep, ALTURA - base_altura))
+        x_rep += base_largura
+
+    if player_img:
+        desenho = player_img if player.facing_direita else pg.transform.flip(player_img, True, False)
+        tela.blit(desenho, (player.x, player.y))
+    else:
+        pg.draw.rect(tela, (255,0,0), (player.x, player.y, 40, 60))
+
+    if DEBUG:
+        for parede in paredes:
+            pg.draw.rect(tela, (255, 0, 255), parede, 2)
+
     pg.display.flip()
-    relogio.tick(60)
+    relogio.tick(FPS)
 
 pg.quit()
-
-#cria a class dos personagens
-class Personagem:
-    def __init__(self, nome, x, y, velocidade, pulo, dano, vida, arma):
-        self.nome = nome
-        self.x = x
-        self.y = y
-        self.velocidade = velocidade
-        self.pulo = pulo
-        self.dano = dano
-        self.vida = vida
-        self.arma = arma
-
-#definicoes de cada um
-gui = Personagem("Gui", 100, 400, velocidade=10, pulo=-20, dano=10, vida=100)
-dias = Personagem("Dias", 100, 400, velocidade=4, pulo=-10, dano=18, vida=150)
-pedro = Personagem("Pedro", 100, 400, velocidade=8, pulo=-15, dano=10, vida=100)
-diego = Personagem("Diego", 100, 400, velocidade=6, pulo=-15, dano=8, vida=80)
-
-
-
 
