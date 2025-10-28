@@ -1,6 +1,5 @@
 import pygame as pg
 import os
-import menu_selecao
 
 pg.init()
 
@@ -15,7 +14,7 @@ DEBUG = False
 
 # Inicialização da tela
 tela = pg.display.set_mode((LARGURA, ALTURA))
-pg.display.set_caption("Nome do jogo")
+pg.display.set_caption("O DESTINO DO TRONO SOMBRA")
 relogio = pg.time.Clock()
 
 # Estado de fullscreen
@@ -23,7 +22,7 @@ tela_em_tela_cheia = False
 ORIG_LARGURA = LARGURA
 ORIG_ALTURA = ALTURA
 
-# =============== FUNÇÕES AUXILIARES ===============
+# =============== FUNCOES AUXILIARES ===============
 def caminho_imagem_para(nome):
     try:
         arquivos = os.listdir(PASTA_IMAGENS)
@@ -53,35 +52,15 @@ def carregar_imagem(caminho, usar_alpha=True):
     except Exception:
         return None
 
-def carregar_frames_gif_pillow(caminho):
-    try:
-        from PIL import Image
-    except Exception:
-        return []
-    frames = []
-    try:
-        pil_img = Image.open(caminho)
-        i = 0
-        while True:
-            try:
-                pil_img.seek(i)
-            except EOFError:
-                break
-            frame = pil_img.convert('RGBA')
-            size = frame.size
-            data = frame.tobytes()
-            surf = pg.image.fromstring(data, size, 'RGBA')
-            frames.append(surf)
-            i += 1
-    except Exception:
-        return []
-    return frames
-
-# =============== CARREGAMENTO DE ASSETS ===============
+# =============== CARREGAMENTO DAS IMAGENS ===============
 bg_path = caminho_imagem_para('bg') or os.path.join(PASTA_IMAGENS, 'bg.png')
 base_path = caminho_imagem_para('base') or os.path.join(PASTA_IMAGENS, 'base.png')
+pipe_path = caminho_imagem_para('pipe') or os.path.join(PASTA_IMAGENS, 'pipe.png')
 imagem_bg_orig = carregar_imagem(bg_path) or pg.Surface((ORIG_LARGURA, ORIG_ALTURA))
 imagem_base_orig = carregar_imagem(base_path) or pg.Surface((200, 40))
+imagem_pipe = carregar_imagem(pipe_path) or pg.Surface((80, 300))
+if isinstance(imagem_pipe, pg.Surface) and imagem_pipe.get_size() == (80, 300):
+    imagem_pipe.fill((100, 100, 100))
 
 def alternar_fullscreen():
     global tela_em_tela_cheia, tela, LARGURA, ALTURA, imagem_bg, imagem_base, base_largura, base_altura
@@ -150,7 +129,7 @@ paredes = []
 fonte = pg.font.SysFont(None, 36)
 pequena = pg.font.SysFont(None, 20)
 
-# =============== FUNÇÃO AUXILIAR: QUEBRAR TEXTO ===============
+# =============== FUNCAO AUXILIAR DE QUEBRAR TEXTO ===============
 def quebrar_texto(texto, fonte, max_largura):
     palavras = texto.split()
     linhas = []
@@ -183,7 +162,7 @@ def menu_principal():
                     raise SystemExit
 
         tela.blit(imagem_bg, (0, 0))
-        titulo = pg.font.SysFont("Arial", 72, bold=True).render("Nome do jogo", True, (255, 215, 0))
+        titulo = pg.font.SysFont("Arial", 72, bold=True).render("O DESTINO DO TRONO SOMBRA", True, (255, 215, 0))
         tela.blit(titulo, (LARGURA//2 - titulo.get_width()//2, 100))
 
         jogar_rect = pg.Rect(LARGURA//2 - 100, ALTURA//2 - 50, 200, 50)
@@ -203,7 +182,7 @@ def menu_principal():
         pg.display.flip()
         relogio.tick(FPS)
 
-# =============== MENU DE SELEÇÃO DE PERSONAGEM ===============
+# =============== MENU DE SELECAO DE PERSONAGEM ===============
 def menu_selecao():
     TAMANHO_THUMB = (160, 160)
     ESPACO_TOTAL = len(personagens) * (TAMANHO_THUMB[0] + 40) - 40
@@ -255,10 +234,9 @@ def menu_selecao():
                     x = X_INICIAL + i * (TAMANHO_THUMB[0] + 40)
                     rect = pg.Rect(x, Y_THUMB, TAMANHO_THUMB[0], TAMANHO_THUMB[1])
                     if rect.collidepoint(mx, my):
-                        # Entra na tela de confirmação
                         while True:
                             tela.blit(imagem_bg, (0, 0))
-                            titulo_jogo = pg.font.SysFont("Arial", 48, bold=True).render("Nome do jogo", True, (255, 215, 0))
+                            titulo_jogo = pg.font.SysFont("Arial", 48, bold=True).render("O DESTINO DO TRONO SOMBRA", True, (255, 215, 0))
                             tela.blit(titulo_jogo, (LARGURA//2 - titulo_jogo.get_width()//2, 20))
 
                             tit = pg.font.SysFont("Arial", 44, bold=True).render(p.nome.upper(), True, (255, 255, 255))
@@ -309,24 +287,19 @@ def menu_selecao():
 
                             pg.display.flip()
 
-                            # Processa eventos DENTRO da tela de confirmação
                             for e in pg.event.get():
                                 if e.type == pg.QUIT:
                                     pg.quit()
                                     raise SystemExit
                                 if e.type == pg.MOUSEBUTTONDOWN and e.button == 1:
                                     if jogar_rect.collidepoint(e.pos):
-                                        return p  # Sai da função inteira → começa o jogo
+                                        return p
                                     if voltar_rect.collidepoint(e.pos):
-                                        # Sai APENAS da tela de confirmação → volta ao menu
                                         break
                             else:
-                                # Se NÃO clicou em "VOLTAR", continua no loop
                                 continue
-                            # Se clicou em "VOLTAR", sai do loop interno
                             break
 
-        # Desenha menu de seleção (sempre que não estiver na tela de confirmação)
         tela.blit(imagem_bg, (0, 0))
         titulo = pg.font.SysFont("Arial", 56, bold=True).render('selecione em um personagem', True, (255, 255, 255))
         tela.blit(titulo, (LARGURA//2 - titulo.get_width()//2, 80))
@@ -397,11 +370,10 @@ def pausar_menu():
         pg.display.flip()
         relogio.tick(FPS)
 
-# =============== INÍCIO DO JOGO ===============
+# =============== INICIO DO JOGO ===============
 menu_principal()
 player = menu_selecao()
 
-# Preparar imagem do jogador
 player_caminho = caminho_imagem_para(player.nome)
 player_img = carregar_imagem(player_caminho) if player_caminho else None
 player_frames = []
@@ -419,6 +391,13 @@ player.x = 100
 player.y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
 player.vel_y = 0
 player.no_chao = True
+
+# =============== CONFIGURACAO DO CANO ===============
+PIPE_LARGURA = imagem_pipe.get_width()
+PIPE_ALTURA = imagem_pipe.get_height()
+PIPE_X = LARGURA - PIPE_LARGURA - 150
+PIPE_Y = ALTURA - base_altura - PIPE_ALTURA
+cano_rect = pg.Rect(PIPE_X, PIPE_Y, PIPE_LARGURA, PIPE_ALTURA)
 
 # =============== LOOP PRINCIPAL ===============
 indice_frame = 0
@@ -492,13 +471,36 @@ while rodando:
         player.vel_y = -player.forca_pulo
         player.no_chao = False
 
+    # =============== COLISAO DO CANO ===============
     player.vel_y += GRAVIDADE
     player.y += player.vel_y
-    ground_y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
-    if player.y >= ground_y:
-        player.y = ground_y
-        player.vel_y = 0
-        player.no_chao = True
+
+    jogador_rect = pg.Rect(player.x, player.y, largura_jog, altura_jog)
+
+    if jogador_rect.colliderect(cano_rect):
+        # Cima
+        if player.vel_y > 0 and jogador_rect.bottom > cano_rect.top and jogador_rect.top < cano_rect.top:
+            player.y = cano_rect.top - altura_jog
+            player.vel_y = 0
+            player.no_chao = True
+        # Baixo
+        elif player.vel_y < 0 and jogador_rect.top < cano_rect.bottom and jogador_rect.bottom > cano_rect.bottom:
+            player.y = cano_rect.bottom
+            player.vel_y = 0
+        # Lados
+        else:
+            if jogador_rect.right > cano_rect.left and jogador_rect.left < cano_rect.left:
+                player.x = cano_rect.left - largura_jog
+            elif jogador_rect.left < cano_rect.right and jogador_rect.right > cano_rect.right:
+                player.x = cano_rect.right
+    else:
+        ground_y = ALTURA - base_altura - (player_img.get_height() if player_img else 60)
+        if player.y >= ground_y:
+            player.y = ground_y
+            player.vel_y = 0
+            player.no_chao = True
+        else:
+            player.no_chao = False
 
     if player_frames and moving:
         temporizador_frame += 1
@@ -515,6 +517,8 @@ while rodando:
         tela.blit(imagem_base, (x_rep, ALTURA - base_altura))
         x_rep += base_largura
 
+    tela.blit(imagem_pipe, (PIPE_X, PIPE_Y))
+
     if player_img:
         desenho = player_img if player.facing_direita else pg.transform.flip(player_img, True, False)
         tela.blit(desenho, (player.x, player.y))
@@ -522,11 +526,9 @@ while rodando:
         pg.draw.rect(tela, (255,0,0), (player.x, player.y, 40, 60))
 
     if DEBUG:
-        for parede in paredes:
-            pg.draw.rect(tela, (255, 0, 255), parede, 2)
+        pg.draw.rect(tela, (255, 0, 255), cano_rect, 2)
 
     pg.display.flip()
     relogio.tick(FPS)
 
 pg.quit()
-
