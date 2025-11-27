@@ -14,9 +14,8 @@ class SeletorTeclado:
         self.root.bind("<F11>", self.toggle_fullscreen)
         self.root.bind("<Escape>", self.sair_fullscreen)
 
-        # frame central
         frame_centro = tk.Frame(root, bg=config.COR_FUNDO)
-        frame_centro.pack(expand=True)  # centraliza vertical/horizontal
+        frame_centro.pack(expand=True)
 
         label = tk.Label(
             frame_centro,
