@@ -1,6 +1,14 @@
-def gerar_texto(tipo_teclado="pt"):
-    if tipo_teclado == "pt":
-        return "A maçã está fresca, café e pão são deliciosos."
-    
-    elif tipo_teclado == "en":
-        return "A maca esta fresca, cafe e pao sao deliciosos."
+import random
+
+ARQUIVO_FRASES = "frases.txt"
+
+def carregar_frases():
+    try:
+        with open(ARQUIVO_FRASES, "r", encoding="utf-8") as arquivo:
+            return [linha.strip() for linha in arquivo if linha.strip()]
+    except FileNotFoundError:
+        return ["Nenhuma frase encontrada. Crie o arquivo frases.txt."]
+
+def gerar_texto():
+    frases = carregar_frases()
+    return random.choice(frases)
