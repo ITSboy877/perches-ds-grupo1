@@ -6,17 +6,22 @@ class Interface:
         self.root = root
         self.tipo_teclado = tipo_teclado
 
+        self.root.configure(bg=config.COR_FUNDO)
+
+        self.frame_centro = tk.Frame(root, bg=config.COR_FUNDO)
+        self.frame_centro.pack(expand=True)
+
         self.label_texto = tk.Label(
-            root,
+            self.frame_centro,
             font=config.FONTE,
             fg=config.COR_TEXTO,
             bg=config.COR_FUNDO,
-            wraplength=750,
-            justify="left"
+            wraplength=900,
+            justify="center"
         )
         self.label_texto.pack(pady=20)
 
-        self.caixa_digitacao = tk.Entry(root, font=config.FONTE, width=60)
+        self.caixa_digitacao = tk.Entry(self.frame_centro, font=config.FONTE, width=60)
         self.caixa_digitacao.pack(pady=10)
         self.caixa_digitacao.bind("<KeyRelease>", self.tecla_pressionada)
 
@@ -31,10 +36,8 @@ class Interface:
         digitado = self.caixa_digitacao.get()
 
         if self.tipo_teclado == "pt":
-            # Aqui você pode tratar algo específico do teclado PT se quiser
             pass
         elif self.tipo_teclado == "en":
-            # Aqui você pode tratar algo específico do teclado EN se quiser
             pass
 
         print(f"Digitado: {digitado}")
