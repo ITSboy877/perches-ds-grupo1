@@ -10,10 +10,6 @@ class SeletorTeclado:
         self.root.geometry("300x150")
         self.root.configure(bg=config.COR_FUNDO)
 
-        self.fullscreen = False
-        self.root.bind("<F11>", self.toggle_fullscreen)
-        self.root.bind("<Escape>", self.sair_fullscreen)
-
         frame_centro = tk.Frame(root, bg=config.COR_FUNDO)
         frame_centro.pack(expand=True)
 
@@ -32,28 +28,25 @@ class SeletorTeclado:
         btn_pt.pack(pady=5)
         btn_en.pack(pady=5)
 
-    def toggle_fullscreen(self, event=None):
-        self.fullscreen = not self.fullscreen
-        self.root.attributes("-fullscreen", self.fullscreen)
-
-    def sair_fullscreen(self, event=None):
-        self.fullscreen = False
-        self.root.attributes("-fullscreen", False)
-
     def iniciar_jogo(self, tipo_teclado):
-        estava_full = self.fullscreen
         self.root.destroy()
+        self.loop_jogo(tipo_teclado)
 
+    def loop_jogo(self, tipo_teclado):
         root = tk.Tk()
         root.title("Jogo de Digitação")
         root.configure(bg=config.COR_FUNDO)
         root.geometry(config.TELA)
-        root.attributes("-fullscreen", estava_full)
-        root.bind("<F11>", lambda e: root.attributes("-fullscreen", not root.attributes("-fullscreen")))
-        root.bind("<Escape>", lambda e: root.attributes("-fullscreen", False))
+
+        def repetir():
+            root.destroy()
+            self.loop_jogo(tipo_teclado)
+
+        def sair():
+            root.destroy()
 
         texto_para_digitar = gerador.gerar_texto()
-        tela_jogo = interface.Interface(root, tipo_teclado)
+        tela_jogo = interface.Interface(root, tipo_teclado, repetir_callback=repetir, sair_callback=sair)
         tela_jogo.definir_texto(texto_para_digitar)
         tela_jogo.iniciar()
 
