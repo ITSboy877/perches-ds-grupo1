@@ -47,7 +47,7 @@ class App:
             bg=config.COR_FUNDO,
             fg=config.COR_TEXTO
         ).pack(pady=10)
-
+        
         tk.Label(
             frame,
             text="Escolha uma opção para continuar:",
