@@ -1,6 +1,7 @@
 import json
 import os
 import hashlib
+from datetime import datetime
 
 ARQUIVO_USUARIOS = "usuarios.json"
 
@@ -26,24 +27,89 @@ def salvar_usuarios(dados):
 def cadastrar_usuario(usuario, senha):
     usuario = usuario.strip()
     senha = senha.strip()
+    
     if not usuario or not senha:
         return False, "Usuário e senha não podem ser vazios."
-
+    
+    if len(usuario) < 3:
+        return False, "Usuário deve ter pelo menos 3 caracteres."
+    
+    if len(senha) < 4:
+        return False, "A senha deve ter pelo menos 4 caracteres."
+    
     dados = carregar_usuarios()
+    
     for u in dados["usuarios"]:
         if u["usuario"].lower() == usuario.lower():
             return False, "Usuário já existe."
-
-    dados["usuarios"].append({"usuario": usuario, "senha": _hash_senha(senha)})
+    
+    # Adiciona estatísticas iniciais ao usuário
+    novo_usuario = {
+        "usuario": usuario,
+        "senha": _hash_senha(senha),
+        "data_cadastro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_partidas": 0,
+        "melhor_wpm": 0,
+        "melhor_precisao": 0,
+        "conquistas": []
+    }
+    
+    dados["usuarios"].append(novo_usuario)
     salvar_usuarios(dados)
-    return True, "Usuário cadastrado com sucesso."
+    
+    return True, "Usuário cadastrado com sucesso!"
 
 def verificar_login(usuario, senha):
     usuario = usuario.strip()
     senha = senha.strip()
+    
     dados = carregar_usuarios()
     senha_hash = _hash_senha(senha)
+    
     for u in dados["usuarios"]:
         if u["usuario"].lower() == usuario.lower() and u["senha"] == senha_hash:
             return True
+    
     return False
+
+def atualizar_stats_usuario(usuario, wpm, precisao):
+    """Atualiza as estatísticas do usuário"""
+    dados = carregar_usuarios()
+    
+    for u in dados["usuarios"]:
+        if u["usuario"].lower() == usuario.lower():
+            u["total_partidas"] = u.get("total_partidas", 0) + 1
+            u["melhor_wpm"] = max(u.get("melhor_wpm", 0), wpm)
+            u["melhor_precisao"] = max(u.get("melhor_precisao", 0), precisao)
+            break
+    
+    salvar_usuarios(dados)
+
+def adicionar_conquista(usuario, conquista_id):
+    """Adiciona conquista ao usuário"""
+    dados = carregar_usuarios()
+    
+    for u in dados["usuarios"]:
+        if u["usuario"].lower() == usuario.lower():
+            if "conquistas" not in u:
+                u["conquistas"] = []
+            if conquista_id not in u["conquistas"]:
+                u["conquistas"].append(conquista_id)
+            break
+    
+    salvar_usuarios(dados)
+
+def obter_stats_usuario(usuario):
+    """Retorna estatísticas do usuário"""
+    dados = carregar_usuarios()
+    
+    for u in dados["usuarios"]:
+        if u["usuario"].lower() == usuario.lower():
+            return {
+                "total_partidas": u.get("total_partidas", 0),
+                "melhor_wpm": u.get("melhor_wpm", 0),
+                "melhor_precisao": u.get("melhor_precisao", 0),
+                "conquistas": u.get("conquistas", [])
+            }
+    
+    return None
