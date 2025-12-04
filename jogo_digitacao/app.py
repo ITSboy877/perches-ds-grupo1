@@ -1,5 +1,3 @@
-# app.py
-
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 from PIL import Image, ImageTk
@@ -24,7 +22,7 @@ class App:
         self.frame_atual = None
         self.usuario_logado = None
         self.modo_jogo = tk.StringVar(value="normal")
-        self.tipo_teclado_selecionado = "pt"  # ✅ SEMPRE ABNT2!
+        self.tipo_teclado_selecionado = "pt" 
         self.categoria_selecionada = None
         self.texto_personalizado = None
         self.sessao_multi = None
@@ -356,12 +354,12 @@ class App:
             else:
                 cor_modo = config.COR_HARDCORE
             
-            # ✅ FRAME COM BORDA FIXA (SEMPRE 2 - NÃO MUDA TAMANHO!)
+           
             frame_modo = tk.Frame(
                 card,
                 bg=config.COR_CARD_DESTAQUE,
                 bd=0,
-                highlightthickness=2,  # ✅ FIXO EM 2 (não muda nunca!)
+                highlightthickness=2, 
                 highlightbackground=config.COR_FRAME_BORDA
             )
             frame_modo.pack(pady=8, fill="x", padx=10)
@@ -404,7 +402,6 @@ class App:
                 justify="left"
             ).pack(anchor="w", pady=(5, 0))
             
-            # ✅ ANIMAÇÃO SEM TREMOR - SÓ MUDA COR DA BORDA!
             def on_enter(e, f=frame_modo, c=cor_modo):
                 f.config(highlightbackground=c)
             
@@ -602,8 +599,7 @@ class App:
             bg=config.COR_FRAME,
             fg=config.COR_TEXTO
         ).pack(pady=(0, 30))
-        
-        # ✅ CORRIGIDO: Solo vai DIRETO para categoria (sem tela de teclado)
+
         self.criar_botao_moderno(
             card, "👤 Solo (Sozinho)",
             self.mostrar_tela_categoria,
@@ -1167,7 +1163,6 @@ class App:
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
         
-        # ✅ ESCONDE A LOGO NA TELA DE JOGO
         self.esconder_logo_global()
         
         # Gera texto
@@ -1195,7 +1190,6 @@ class App:
             sessao_multi=None
         )
         jogo.definir_texto(texto)
-        # ✅ NÃO CHAMA jogo.iniciar() - Botão aparece automaticamente!
     
     def mostrar_tela_jogo_multi(self):
         """Mostra tela de jogo multiplayer"""
@@ -1243,7 +1237,6 @@ class App:
             sessao_multi=self.sessao_multi
         )
         jogo.definir_texto(self.sessao_multi.texto)
-        # ✅ NÃO CHAMA jogo.iniciar() - Botão aparece automaticamente!
     
     def mostrar_resultado_multiplayer(self):
         """Mostra resultado final do multiplayer"""
