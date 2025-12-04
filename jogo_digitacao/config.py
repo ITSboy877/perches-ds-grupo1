@@ -8,60 +8,52 @@ FONTE_TITULO = ("Segoe UI", 36, "bold")
 FONTE_SUBTITULO = ("Segoe UI", 20, "bold")
 FONTE_TEXTO = ("Segoe UI", 18)
 FONTE_TEXTO_GRANDE = ("Segoe UI", 22)
-FONTE_MONO = ("Consolas", 20)  # Para área de digitação
+FONTE_MONO = ("Consolas", 20)
 FONTE_STATS = ("Segoe UI", 16)
 FONTE_MINI = ("Segoe UI", 14)
 
 # ==================== PALETA DE CORES MODERNA ====================
-# Fundo e Cards
-COR_FUNDO = "#0f172a"  # Azul escuro moderno
+COR_FUNDO = "#0f172a"
 COR_FUNDO_GRADIENTE = "#1e293b"
-COR_FRAME = "#1e293b"  # Card escuro
+COR_FRAME = "#1e293b"
 COR_FRAME_BORDA = "#334155"
 COR_CARD_DESTAQUE = "#2d3748"
 
-# Texto
-COR_TEXTO = "#f1f5f9"  # Branco suave
+COR_TEXTO = "#f1f5f9"
 COR_TEXTO_SECUNDARIO = "#94a3b8"
 COR_TEXTO_DESTAQUE = "#ffffff"
 
-# Botões
-COR_BOTAO = "#3b82f6"  # Azul vibrante
+COR_BOTAO = "#3b82f6"
 COR_BOTAO_HOVER = "#2563eb"
 COR_BOTAO_TEXTO = "#ffffff"
 COR_BOTAO_SECUNDARIO = "#475569"
 COR_BOTAO_SECUNDARIO_HOVER = "#334155"
 
-# Status e Feedback
-COR_SUCESSO = "#10b981"  # Verde moderno
+COR_SUCESSO = "#10b981"
 COR_SUCESSO_CLARO = "#34d399"
-COR_ERRO = "#ef4444"  # Vermelho vibrante
+COR_ERRO = "#ef4444"
 COR_ERRO_CLARO = "#f87171"
-COR_AVISO = "#f59e0b"  # Laranja
-COR_INFO = "#06b6d4"  # Ciano
+COR_AVISO = "#f59e0b"
+COR_INFO = "#06b6d4"
 
-# Modos de Jogo
 COR_NORMAL = "#10b981"
 COR_MORTE_SUBITA = "#f59e0b"
 COR_HARDCORE = "#ef4444"
 
-# Ranking e Progresso
 COR_OURO = "#fbbf24"
 COR_PRATA = "#94a3b8"
 COR_BRONZE = "#f97316"
 COR_PROGRESSO = "#3b82f6"
 COR_PROGRESSO_BG = "#1e293b"
 
-# Efeitos visuais
-COR_COMBO_1 = "#3b82f6"  # Azul
-COR_COMBO_2 = "#8b5cf6"  # Roxo
-COR_COMBO_3 = "#ec4899"  # Rosa
-COR_COMBO_4 = "#f59e0b"  # Laranja
-COR_COMBO_5 = "#ef4444"  # Vermelho (FIRE!)
+COR_COMBO_1 = "#3b82f6"
+COR_COMBO_2 = "#8b5cf6"
+COR_COMBO_3 = "#ec4899"
+COR_COMBO_4 = "#f59e0b"
+COR_COMBO_5 = "#ef4444"
 
 # ==================== TEMPO E MODOS ====================
 TEMPO = 60
-
 MODOS_JOGO = [
     ("normal", "Normal"),
     ("morte_subita", "Morte Súbita"),
@@ -105,14 +97,48 @@ PESOS_PONTOS = {
     },
 }
 
+# ==================== SISTEMA DE XP E NÍVEIS ====================
+XP_POR_PARTIDA = 10
+XP_POR_WPM = 2 
+XP_POR_PRECISAO = 1  
+XP_BONUS_PERFEITO = 50
+
+NIVEIS = [
+    (0, "Iniciante", "🌱"),
+    (100, "Aprendiz", "📚"),
+    (300, "Intermediário", "⚡"),
+    (600, "Avançado", "🔥"),
+    (1000, "Expert", "💎"),
+    (1500, "Mestre", "👑"),
+    (2500, "Lenda", "⭐")
+]
+
+def calcular_nivel(xp):
+    """Retorna o nível atual baseado no XP"""
+    nivel_atual = NIVEIS[0]
+    for xp_necessario, nome, icone in NIVEIS:
+        if xp >= xp_necessario:
+            nivel_atual = (xp_necessario, nome, icone)
+    return nivel_atual
+
+def xp_para_proximo_nivel(xp):
+    """Retorna quanto XP falta para o próximo nível"""
+    for i, (xp_necessario, nome, icone) in enumerate(NIVEIS):
+        if xp < xp_necessario:
+            return xp_necessario - xp
+    return 0
+
 # ==================== CONQUISTAS E BADGES ====================
 CONQUISTAS = {
-    "primeira_vitoria": {"nome": "Primeira Vitória", "desc": "Complete sua primeira rodada", "icone": "🏆"},
-    "velocista": {"nome": "Velocista", "desc": "Alcance 60 WPM", "icone": "⚡"},
-    "mestre": {"nome": "Mestre da Digitação", "desc": "Alcance 80 WPM", "icone": "👑"},
-    "perfeito": {"nome": "Perfeição", "desc": "Complete sem erros", "icone": "💎"},
-    "combo_master": {"nome": "Combo Master", "desc": "Combo de 50+ caracteres", "icone": "🔥"},
-    "resistencia": {"nome": "Resistência", "desc": "Complete 10 rodadas", "icone": "💪"},
+    "primeira_vitoria": {"nome": "Primeira Vitória", "desc": "Complete sua primeira rodada", "icone": "🏆", "xp": 25},
+    "velocista": {"nome": "Velocista", "desc": "Alcance 60 WPM", "icone": "⚡", "xp": 50},
+    "mestre": {"nome": "Mestre da Digitação", "desc": "Alcance 80 WPM", "icone": "👑", "xp": 100},
+    "perfeito": {"nome": "Perfeição", "desc": "Complete sem erros", "icone": "💎", "xp": 75},
+    "combo_master": {"nome": "Combo Master", "desc": "Combo de 50+ caracteres", "icone": "🔥", "xp": 60},
+    "resistencia": {"nome": "Resistência", "desc": "Complete 10 rodadas", "icone": "💪", "xp": 80},
+    "dedicacao": {"nome": "Dedicação", "desc": "Complete 50 rodadas", "icone": "🎯", "xp": 150},
+    "maratonista": {"nome": "Maratonista", "desc": "Complete 100 rodadas", "icone": "🏃", "xp": 300},
+    "flash": {"nome": "Flash", "desc": "Alcance 100 WPM", "icone": "⚡", "xp": 200},
 }
 
 # ==================== NÍVEIS DE COMBO ====================
@@ -125,12 +151,12 @@ NIVEIS_COMBO = [
 ]
 
 # ==================== CONFIGURAÇÕES DE ANIMAÇÃO ====================
-ANIMACAO_DURACAO = 300  # ms
-ANIMACAO_FEEDBACK_ERRO = 150  # ms
-ANIMACAO_COMBO = 500  # ms
+ANIMACAO_DURACAO = 300
+ANIMACAO_FEEDBACK_ERRO = 150
+ANIMACAO_COMBO = 500
 
 # ==================== CONFIGURAÇÕES DE SOM (OPCIONAL) ====================
-SOM_HABILITADO = False  # Mude para True se quiser sons
+SOM_HABILITADO = False
 SOM_ACERTO = "sounds/click.wav"
 SOM_ERRO = "sounds/error.wav"
 SOM_COMBO = "sounds/combo.wav"
