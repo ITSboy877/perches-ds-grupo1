@@ -1,115 +1,71 @@
 import json
 import os
-import hashlib
 from datetime import datetime
 
-ARQUIVO_USUARIOS = "usuarios.json"
+ARQUIVO_RANKING = "ranking.json"
 
-def _hash_senha(senha: str) -> str:
-    return hashlib.sha256(senha.encode("utf-8")).hexdigest()
-
-def carregar_usuarios():
-    if not os.path.exists(ARQUIVO_USUARIOS):
-        return {"usuarios": []}
+def carregar_ranking():
+    if not os.path.exists(ARQUIVO_RANKING):
+        return []
     try:
-        with open(ARQUIVO_USUARIOS, "r", encoding="utf-8") as f:
+        with open(ARQUIVO_RANKING, "r", encoding="utf-8") as f:
             dados = json.load(f)
-            if "usuarios" not in dados or not isinstance(dados["usuarios"], list):
-                return {"usuarios": []}
-            return dados
-    except (json.JSONDecodeError, OSError):
-        return {"usuarios": []}
+            lista = dados.get("ranking", [])
+            # Retorna tupla (nome, pontos, wpm, precisao, modo, data)
+            resultado = []
+            for item in lista:
+                resultado.append((
+                    item.get("nome", "Jogador"),
+                    int(item.get("pontos", 0)),
+                    float(item.get("wpm", 0)),
+                    float(item.get("precisao", 0)),
+                    item.get("modo", "normal"),
+                    item.get("data", "")
+                ))
+            return resultado
+    except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError):
+        return []
 
-def salvar_usuarios(dados):
-    with open(ARQUIVO_USUARIOS, "w", encoding="utf-8") as f:
-        json.dump(dados, f, indent=4, ensure_ascii=False)
-
-def cadastrar_usuario(usuario, senha):
-    usuario = usuario.strip()
-    senha = senha.strip()
+def salvar_pontos(nome, pontos, wpm=0, precisao=0, modo="normal"):
+    ranking = carregar_ranking()
     
-    if not usuario or not senha:
-        return False, "Usuário e senha não podem ser vazios."
-    
-    if len(usuario) < 3:
-        return False, "Usuário deve ter pelo menos 3 caracteres."
-    
-    if len(senha) < 4:
-        return False, "A senha deve ter pelo menos 4 caracteres."
-    
-    dados = carregar_usuarios()
-    
-    for u in dados["usuarios"]:
-        if u["usuario"].lower() == usuario.lower():
-            return False, "Usuário já existe."
-    
-    # Adiciona estatísticas iniciais ao usuário
-    novo_usuario = {
-        "usuario": usuario,
-        "senha": _hash_senha(senha),
-        "data_cadastro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_partidas": 0,
-        "melhor_wpm": 0,
-        "melhor_precisao": 0,
-        "conquistas": []
+    nova_entrada = {
+        "nome": nome,
+        "pontos": int(pontos),
+        "wpm": float(wpm),
+        "precisao": float(precisao),
+        "modo": modo,
+        "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     
-    dados["usuarios"].append(novo_usuario)
-    salvar_usuarios(dados)
+    # Adiciona ao ranking
+    ranking_dict = []
+    for r in ranking:
+        ranking_dict.append({
+            "nome": r[0],
+            "pontos": r[1],
+            "wpm": r[2],
+            "precisao": r[3],
+            "modo": r[4],
+            "data": r[5]
+        })
     
-    return True, "Usuário cadastrado com sucesso!"
+    ranking_dict.append(nova_entrada)
+    
+    dados = {"ranking": ranking_dict}
+    
+    with open(ARQUIVO_RANKING, "w", encoding="utf-8") as f:
+        json.dump(dados, f, indent=4, ensure_ascii=False)
 
-def verificar_login(usuario, senha):
-    usuario = usuario.strip()
-    senha = senha.strip()
-    
-    dados = carregar_usuarios()
-    senha_hash = _hash_senha(senha)
-    
-    for u in dados["usuarios"]:
-        if u["usuario"].lower() == usuario.lower() and u["senha"] == senha_hash:
-            return True
-    
-    return False
+def obter_top_por_modo(modo, limite=10):
+    """Retorna top jogadores de um modo específico"""
+    ranking = carregar_ranking()
+    filtrado = [r for r in ranking if r[4] == modo]
+    filtrado.sort(key=lambda x: x[1], reverse=True)
+    return filtrado[:limite]
 
-def atualizar_stats_usuario(usuario, wpm, precisao):
-    """Atualiza as estatísticas do usuário"""
-    dados = carregar_usuarios()
-    
-    for u in dados["usuarios"]:
-        if u["usuario"].lower() == usuario.lower():
-            u["total_partidas"] = u.get("total_partidas", 0) + 1
-            u["melhor_wpm"] = max(u.get("melhor_wpm", 0), wpm)
-            u["melhor_precisao"] = max(u.get("melhor_precisao", 0), precisao)
-            break
-    
-    salvar_usuarios(dados)
-
-def adicionar_conquista(usuario, conquista_id):
-    """Adiciona conquista ao usuário"""
-    dados = carregar_usuarios()
-    
-    for u in dados["usuarios"]:
-        if u["usuario"].lower() == usuario.lower():
-            if "conquistas" not in u:
-                u["conquistas"] = []
-            if conquista_id not in u["conquistas"]:
-                u["conquistas"].append(conquista_id)
-            break
-    
-    salvar_usuarios(dados)
-
-def obter_stats_usuario(usuario):
-    """Retorna estatísticas do usuário"""
-    dados = carregar_usuarios()
-    
-    for u in dados["usuarios"]:
-        if u["usuario"].lower() == usuario.lower():
-            return {
-                "total_partidas": u.get("total_partidas", 0),
-                "melhor_wpm": u.get("melhor_wpm", 0),
-                "melhor_precisao": u.get("melhor_precisao", 0),
-                "conquistas": u.get("conquistas", [])
-            }
-    
-    return None
+def obter_melhor_pontuacao_usuario(nome):
+    """Retorna a melhor pontuação de um usuário"""
+    ranking = carregar_ranking()
+    usuario_scores = [r[1] for r in ranking if r[0].lower() == nome.lower()]
+    return max(usuario_scores) if usuario_scores else 0
