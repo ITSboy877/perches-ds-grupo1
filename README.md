@@ -1,4 +1,4 @@
-# 🎮 Perches DS Grupo 1
+# 🎮 Perches DS 
 
 > Um jogo educativo desenvolvido em Python como projeto de aula dos cursos técnicos.
 
