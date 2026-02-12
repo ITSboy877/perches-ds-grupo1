@@ -18,6 +18,7 @@ class InterfaceJogo:
         
         self.root.configure(bg=config.COR_FUNDO)
         
+        # Variáveis de controle
         self.texto = ""
         self.tempo_inicio = None
         self.timer_id = None
@@ -43,7 +44,9 @@ class InterfaceJogo:
         )
         self.frame_ranking.pack(side="left", fill="y", padx=(0, 10))
         
+        # Título do ranking
         modo_nome = next((nome for mid, nome in config.MODOS_JOGO if mid == self.modo_jogo), "Normal")
+        
         if self.modo_jogo == "normal":
             cor_modo = config.COR_NORMAL
         elif self.modo_jogo == "morte_subita":
@@ -67,6 +70,7 @@ class InterfaceJogo:
             fg=config.COR_TEXTO_SECUNDARIO
         ).pack(pady=(0, 15))
         
+        # Treeview
         style = ttk.Style()
         style.theme_use("clam")
         style.configure(
@@ -99,6 +103,7 @@ class InterfaceJogo:
             height=12,
             style="Ranking.Treeview"
         )
+        
         self.tree_lateral.heading("Pos", text="#", anchor="center")
         self.tree_lateral.heading("Nome", text="Jogador", anchor="w")
         self.tree_lateral.heading("Pontos", text="Pontos", anchor="center")
@@ -108,6 +113,7 @@ class InterfaceJogo:
         self.tree_lateral.column("Pontos", width=90, anchor="center", minwidth=70)
         
         self.tree_lateral.pack(fill="both", expand=True, pady=(10, 0))
+        
         self.atualizar_ranking_lateral()
         
         # =============== PAINEL DIREITO - JOGO ===============
@@ -125,14 +131,11 @@ class InterfaceJogo:
         )
         self.frame_centro.pack(expand=True, fill="both")
         
-        if self.logo_img is not None:
-            lbl_logo = tk.Label(self.frame_centro, image=self.logo_img, bg=config.COR_FRAME)
-            lbl_logo.place(relx=0.98, rely=0.02, anchor="ne")
-        
         # =============== HEADER - INFO DO JOGO ===============
         header_frame = tk.Frame(self.frame_centro, bg=config.COR_FRAME)
         header_frame.pack(fill="x", pady=(0, 20))
         
+        # Tempo
         self.label_tempo = tk.Label(
             header_frame,
             text=f"⏱️ {self.tempo_restante}s",
@@ -142,6 +145,7 @@ class InterfaceJogo:
         )
         self.label_tempo.pack(side="left")
         
+        # WPM
         self.label_wpm = tk.Label(
             header_frame,
             text="⚡ 0 WPM",
@@ -186,6 +190,7 @@ class InterfaceJogo:
             bd=0,
             justify="center"
         )
+        
         self.caixa_digitacao.bind("<KeyRelease>", self.verificar_digitacao_tempo_real)
         self.caixa_digitacao.bind("<Return>", self.finalizar_digitacao)
         
@@ -217,25 +222,26 @@ class InterfaceJogo:
         )
         self.btn_pronto.pack(pady=20)
         
-        # Hover effect
         self.btn_pronto.bind("<Enter>", lambda e: self.btn_pronto.config(bg=config.COR_SUCESSO_CLARO))
         self.btn_pronto.bind("<Leave>", lambda e: self.btn_pronto.config(bg=config.COR_SUCESSO))
         
         # =============== FRAMES DE RESULTADO ===============
         self.frame_resultado = tk.Frame(self.frame_centro, bg=config.COR_FRAME)
-        self.frame_resultado.pack(pady=10, fill="x")
+        self.frame_resultado.pack(pady=5, fill="x")
         
         self.frame_botoes_finais = tk.Frame(self.frame_centro, bg=config.COR_FRAME)
-        self.frame_botoes_finais.pack(pady=10)
-    
+        self.frame_botoes_finais.pack(pady=5)
+
     # =============== RANKING ===============
     def atualizar_ranking_lateral(self):
+        """Atualiza o ranking lateral"""
         for item in self.tree_lateral.get_children():
             self.tree_lateral.delete(item)
         
         ranking_completo = ranked.carregar_ranking()
         ranking_modo = [r for r in ranking_completo if len(r) >= 5 and r[4] == self.modo_jogo]
         ranking_modo.sort(key=lambda x: x[1], reverse=True)
+        
         top = ranking_modo[:config.RANKING_TOP_EXIBIR]
         
         for idx, entrada in enumerate(top, 1):
@@ -255,16 +261,26 @@ class InterfaceJogo:
         
         if len(top) == 0:
             self.tree_lateral.insert("", "end", values=("", "Nenhum registro", 0))
-    
+
     # =============== CONTROLE DO JOGO ===============
     def definir_texto(self, texto):
+        """Define o texto e prepara a interface"""
+        # Limpa bindings anteriores
+        try:
+            self.root.unbind("<Return>")
+            self.root.unbind("<space>")
+        except:
+            pass
+        
         self.texto = texto
         self.label_texto.config(text="Clique em INICIAR para começar")
         self.caixa_digitacao.delete(0, tk.END)
         self.caixa_digitacao.configure(state="disabled")
         self.caixa_digitacao.pack_forget()
+        
         self.tempo_restante = config.TEMPO_POR_MODO.get(self.modo_jogo, config.TEMPO)
         self.label_tempo.config(text=f"⏱️ {self.tempo_restante}s")
+        
         self.combo_atual = 0
         self.combo_maximo = 0
         self.caracteres_digitados = 0
@@ -280,18 +296,20 @@ class InterfaceJogo:
         self.btn_pronto.config(state="normal")
         self.btn_pronto.pack(pady=20)
         
-        self.root.bind("<space>", lambda e: self.comecar())
         self.root.bind("<Return>", lambda e: self.comecar())
-    
+        self.root.bind("<space>", lambda e: self.comecar())
+
     def comecar(self):
+        """Inicia o jogo"""
         try:
-            self.root.unbind("<space>")
             self.root.unbind("<Return>")
+            self.root.unbind("<space>")
         except:
             pass
         
         self.btn_pronto.pack_forget()
         self.label_texto.config(text=self.texto)
+        
         self.caixa_digitacao.pack(pady=15, ipady=12)
         self.caixa_digitacao.configure(state="normal")
         self.caixa_digitacao.delete(0, tk.END)
@@ -300,7 +318,7 @@ class InterfaceJogo:
         self.tempo_inicio = time.time()
         self.tempo_restante = config.TEMPO_POR_MODO.get(self.modo_jogo, config.TEMPO)
         self.atualizar_cronometro()
-    
+
     def atualizar_cronometro(self):
         if self.tempo_restante <= 10:
             cor_tempo = config.COR_ERRO
@@ -317,10 +335,10 @@ class InterfaceJogo:
         else:
             self.caixa_digitacao.configure(state="disabled")
             self.finalizar_digitacao()
-    
+
     # =============== FEEDBACK TEMPO REAL ===============
     def verificar_digitacao_tempo_real(self, event=None):
-        """Atualiza WPM, progresso e combo em tempo real"""
+        """Atualiza WPM, progresso e combo"""
         if not self.tempo_inicio:
             return
         
@@ -345,6 +363,7 @@ class InterfaceJogo:
         self.combo_atual = corretos_consecutivos
         if self.combo_atual > self.combo_maximo:
             self.combo_maximo = self.combo_atual
+        
         self.atualizar_label_combo()
         
         if self.modo_jogo == "morte_subita":
@@ -353,8 +372,9 @@ class InterfaceJogo:
                     self.caixa_digitacao.configure(state="disabled")
                     self.root.after(300, self.finalizar_digitacao)
                     break
-    
+
     def atualizar_label_combo(self):
+        """Atualiza o label de combo"""
         if self.combo_atual < 10:
             self.label_combo.config(text="")
             return
@@ -369,9 +389,9 @@ class InterfaceJogo:
                 break
         
         self.label_combo.config(text=texto, fg=cor)
-    
+
     def atualizar_barra_progresso(self, progresso):
-        """Atualiza a barra de progresso visual"""
+        """Atualiza a barra de progresso"""
         self.canvas_progresso.delete("all")
         largura = self.canvas_progresso.winfo_width()
         if largura <= 1:
@@ -379,6 +399,7 @@ class InterfaceJogo:
         altura = 12
         
         largura_progresso = int(largura * progresso)
+        
         if largura_progresso > 0:
             if progresso < 0.3:
                 cor = config.COR_ERRO
@@ -386,10 +407,11 @@ class InterfaceJogo:
                 cor = config.COR_AVISO
             else:
                 cor = config.COR_SUCESSO
+            
             self.canvas_progresso.create_rectangle(0, 0, largura_progresso, altura, fill=cor, outline="")
-    
+
     def esconder_cabecalho(self):
-        """Esconde elementos do cabeçalho após finalização"""
+        """Esconde elementos do cabeçalho"""
         self.label_tempo.pack_forget()
         self.label_texto.pack_forget()
         self.caixa_digitacao.delete(0, tk.END)
@@ -397,10 +419,10 @@ class InterfaceJogo:
         self.label_combo.pack_forget()
         self.label_wpm.pack_forget()
         self.canvas_progresso.pack_forget()
-    
+
     # =============== FINALIZAÇÃO ===============
     def finalizar_digitacao(self, event=None):
-        """Finaliza a rodada e mostra resultados"""
+        """Finaliza a rodada"""
         if self.timer_id is not None:
             self.root.after_cancel(self.timer_id)
             self.timer_id = None
@@ -431,9 +453,10 @@ class InterfaceJogo:
             pontos = 0
         
         self.mostrar_resultado(corretos, errados, total, tempo_total, pontos, wpm, precisao, combo_max, bonus_combo)
-    
+
     # =============== COMPARAÇÃO E PONTUAÇÃO ===============
     def comparar_textos(self, original: str, digitado: str):
+        """Compara caractere a caractere"""
         lista_flags = []
         tamanho = max(len(original), len(digitado))
         corretos = 0
@@ -455,21 +478,21 @@ class InterfaceJogo:
                 if c_orig != "" or c_dig != "":
                     errados += 1
                     combo_atual = 0
-                lista_flags.append((c_orig, c_dig, False))
-            
-            if self.modo_jogo == "morte_subita" and errados > 0:
-                for j in range(i + 1, tamanho):
-                    c_orig2 = original[j] if j < len(original) else ""
-                    c_dig2 = ""
-                    if c_orig2 != "":
-                        errados += 1
-                    lista_flags.append((c_orig2, c_dig2, False))
-                break
+                    lista_flags.append((c_orig, c_dig, False))
+                
+                if self.modo_jogo == "morte_subita" and errados > 0:
+                    for j in range(i + 1, tamanho):
+                        c_orig2 = original[j] if j < len(original) else ""
+                        if c_orig2 != "":
+                            errados += 1
+                            lista_flags.append((c_orig2, "", False))
+                    break
         
         total = corretos + errados
         return corretos, errados, total, lista_flags, combo_max
-    
+
     def calcular_pontos(self, caracteres_corretos, caracteres_errados, tempo_segundos, combo_max):
+        """Calcula pontos"""
         pesos = config.PESOS_PONTOS.get(self.modo_jogo, config.PESOS_PONTOS["normal"])
         
         base = caracteres_corretos * pesos["ponto_por_correto"]
@@ -487,11 +510,12 @@ class InterfaceJogo:
             bonus_combo = int(pontos * 0.1)
         
         pontos += bonus_combo
+        
         return max(pontos, 0), bonus_combo
-    
+
     # =============== CONQUISTAS E XP ===============
     def verificar_conquistas(self, wpm, precisao, errados, combo_max):
-        """Verifica e adiciona conquistas desbloqueadas"""
+        """Verifica conquistas"""
         if not self.usuario:
             return [], 0
         
@@ -549,13 +573,15 @@ class InterfaceJogo:
             novas_conquistas.append("primeira_vitoria")
         
         return novas_conquistas, xp_total_conquistas
-    
+
     def processar_xp_e_conquistas(self, wpm, precisao, errados, combo_max):
+        """Processa XP e conquistas"""
         novas_conquistas, xp_conquistas = self.verificar_conquistas(wpm, precisao, errados, combo_max)
         
         xp_partida = config.XP_POR_PARTIDA
         xp_partida += int(wpm * config.XP_POR_WPM)
         xp_partida += int(precisao * config.XP_POR_PRECISAO)
+        
         if errados == 0:
             xp_partida += config.XP_BONUS_PERFEITO
         
@@ -565,23 +591,23 @@ class InterfaceJogo:
         
         if novas_conquistas:
             self.mostrar_conquistas_desbloqueadas(novas_conquistas)
-    
-    # =============== UI DE RESULTADO ===============
+
+    # =============== UI DE RESULTADO (COMPACTA) ===============
     def mostrar_mensagem(self, texto, erro=False):
         for w in self.frame_resultado.winfo_children():
             w.destroy()
         
         cor = config.COR_ERRO if erro else config.COR_TEXTO
         tk.Label(self.frame_resultado, text=texto, font=config.FONTE_TEXTO, bg=config.COR_FRAME, fg=cor, justify="center").pack()
-    
+
     def mostrar_resultado(self, corretos, errados, total, tempo_gasto, pontos, wpm, precisao, combo_max, bonus_combo):
-        
+        """Exibe os resultados finais - VERSÃO COMPACTA"""
         for widget in self.frame_resultado.winfo_children():
             widget.destroy()
         
         self.esconder_cabecalho()
         
-        # =============== TÍTULO DO RESULTADO ===============
+        # =============== TÍTULO COMPACTO ===============
         if precisao == 100:
             titulo = "🏆 PERFEITO!"
             cor_titulo = config.COR_SUCESSO
@@ -589,7 +615,7 @@ class InterfaceJogo:
             titulo = "⭐ EXCELENTE!"
             cor_titulo = config.COR_SUCESSO
         elif precisao >= 75:
-            titulo = "👍 BOM TRABALHO!"
+            titulo = "👍 BOM!"
             cor_titulo = config.COR_INFO
         else:
             titulo = "📊 RESULTADO"
@@ -598,107 +624,78 @@ class InterfaceJogo:
         tk.Label(
             self.frame_resultado,
             text=titulo,
-            font=config.FONTE_TITULO,
+            font=("Segoe UI", 16, "bold"),
             bg=config.COR_FRAME,
             fg=cor_titulo
-        ).pack(pady=(0, 20))
+        ).pack(pady=(0, 8))
         
-        # =============== CONTAINER PRINCIPAL (2 COLUNAS) ===============
+        # =============== GRID 2x3 COMPACTO ===============
         container_stats = tk.Frame(self.frame_resultado, bg=config.COR_FRAME)
-        container_stats.pack(pady=10, padx=20, fill="x", expand=True)
+        container_stats.pack(pady=3, padx=10, fill="x")
         
-        # COLUNA ESQUERDA
-        coluna_esquerda = tk.Frame(container_stats, bg=config.COR_FRAME)
-        coluna_esquerda.pack(side="left", padx=20, expand=True, fill="both")
-        
-        # COLUNA DIREITA
-        coluna_direita = tk.Frame(container_stats, bg=config.COR_FRAME)
-        coluna_direita.pack(side="right", padx=20, expand=True, fill="both")
-        
-        # =============== FUNÇÃO PARA CRIAR CARDS DE STATS ===============
-        def criar_stat_card(parent, icone, valor, label, cor):
+        def criar_stat_compacto(parent, icone, valor, label, cor, row, col):
             card = tk.Frame(
                 parent,
                 bg=config.COR_CARD_DESTAQUE,
                 bd=0,
-                highlightthickness=2,
+                highlightthickness=1,
                 highlightbackground=cor,
-                padx=25,
-                pady=15
+                padx=8,
+                pady=5
             )
-            card.pack(pady=8, fill="x")
-
-            frame_topo = tk.Frame(card, bg=config.COR_CARD_DESTAQUE)
-            frame_topo.pack(fill="x")
+            card.grid(row=row, column=col, padx=3, pady=3, sticky="ew")
             
             tk.Label(
-                frame_topo,
-                text=icone,
-                font=("Segoe UI", 24),
+                card,
+                text=f"{icone} {valor}",
+                font=("Segoe UI", 14, "bold"),
                 bg=config.COR_CARD_DESTAQUE,
                 fg=cor
-            ).pack(side="left", padx=(0, 10))
-            
-            tk.Label(
-                frame_topo,
-                text=valor,
-                font=("Segoe UI", 32, "bold"),
-                bg=config.COR_CARD_DESTAQUE,
-                fg=cor
-            ).pack(side="left")
+            ).pack()
             
             tk.Label(
                 card,
                 text=label,
-                font=config.FONTE_TEXTO,
+                font=("Segoe UI", 10),
                 bg=config.COR_CARD_DESTAQUE,
                 fg=config.COR_TEXTO_SECUNDARIO
-            ).pack(anchor="w", pady=(5, 0))
-            
-            return card
+            ).pack()
         
-        # =============== COLUNA ESQUERDA - ESTATÍSTICAS ===============
-        criar_stat_card(coluna_esquerda, "⚡", f"{wpm:.1f}", "WPM (Palavras por Minuto)", config.COR_INFO)
-        criar_stat_card(coluna_esquerda, "🎯", f"{precisao:.1f}%", "Precisão", config.COR_SUCESSO if precisao >= 90 else config.COR_AVISO)
-        criar_stat_card(coluna_esquerda, "⏱️", f"{tempo_gasto:.1f}s", "Tempo Gasto", config.COR_TEXTO_SECUNDARIO)
+        container_stats.grid_columnconfigure(0, weight=1)
+        container_stats.grid_columnconfigure(1, weight=1)
         
-        # =============== COLUNA DIREITA - DETALHES ===============
-        criar_stat_card(coluna_direita, "✅", f"{corretos}", "Caracteres Corretos", config.COR_SUCESSO)
-        criar_stat_card(coluna_direita, "❌", f"{errados}", "Caracteres Errados", config.COR_ERRO)
-        criar_stat_card(coluna_direita, "🏆", f"{pontos}", "Pontos Totais", config.COR_OURO)
+        # Grid 2x3
+        criar_stat_compacto(container_stats, "⚡", f"{wpm:.1f}", "WPM", config.COR_INFO, 0, 0)
+        criar_stat_compacto(container_stats, "🎯", f"{precisao:.1f}%", "Precisão", config.COR_SUCESSO if precisao >= 90 else config.COR_AVISO, 0, 1)
+        criar_stat_compacto(container_stats, "✅", f"{corretos}", "Corretos", config.COR_SUCESSO, 1, 0)
+        criar_stat_compacto(container_stats, "❌", f"{errados}", "Errados", config.COR_ERRO, 1, 1)
+        criar_stat_compacto(container_stats, "⏱️", f"{tempo_gasto:.1f}s", "Tempo", config.COR_TEXTO_SECUNDARIO, 2, 0)
+        criar_stat_compacto(container_stats, "🏆", f"{pontos}", "Pontos", config.COR_OURO, 2, 1)
         
-        # =============== COMBO E BÔNUS (SE HOUVER) ===============
+        # =============== COMBO COMPACTO ===============
         if combo_max >= 10:
-            frame_bonus = tk.Frame(self.frame_resultado, bg=config.COR_FRAME)
-            frame_bonus.pack(pady=15, fill="x", padx=40)
-            
-            card_bonus = tk.Frame(
-                frame_bonus,
+            card_combo = tk.Frame(
+                self.frame_resultado,
                 bg=config.COR_CARD_DESTAQUE,
                 bd=0,
-                highlightthickness=2,
+                highlightthickness=1,
                 highlightbackground=config.COR_COMBO_3,
-                padx=20,
-                pady=12
+                padx=8,
+                pady=4
             )
-            card_bonus.pack(fill="x")
+            card_combo.pack(pady=4, fill="x", padx=10)
+            
+            texto_combo = f"🔥 Combo: {combo_max}"
+            if bonus_combo > 0:
+                texto_combo += f"  (+{bonus_combo} pts)"
             
             tk.Label(
-                card_bonus,
-                text=f"🔥 Combo Máximo: {combo_max} caracteres",
-                font=config.FONTE_SUBTITULO,
+                card_combo,
+                text=texto_combo,
+                font=("Segoe UI", 12, "bold"),
                 bg=config.COR_CARD_DESTAQUE,
                 fg=config.COR_COMBO_3
-            ).pack(side="left", padx=10)
-            
-            if bonus_combo > 0:
-                tk.Label(
-                    card_bonus,
-                    text=f"+{bonus_combo} pontos de bônus!",
-                    font=config.FONTE_TEXTO,
-                    bg=config.COR_CARD_DESTAQUE,
-                    fg=config.COR_OURO
-                ).pack(side="right", padx=10)
+            ).pack()
         
         # =============== MENSAGEM MOTIVACIONAL ===============
         mensagem = ""
@@ -711,12 +708,12 @@ class InterfaceJogo:
             tk.Label(
                 self.frame_resultado,
                 text=mensagem,
-                font=config.FONTE_SUBTITULO,
+                font=("Segoe UI", 12),
                 bg=config.COR_FRAME,
                 fg=config.COR_TEXTO_DESTAQUE
-            ).pack(pady=(15, 5))
+            ).pack(pady=4)
         
-        # =============== SISTEMA DE XP E CONQUISTAS ===============
+        # =============== XP E CONQUISTAS ===============
         if self.usuario and self.sessao_multi is None:
             self.processar_xp_e_conquistas(wpm, precisao, errados, combo_max)
             login.atualizar_stats_usuario(self.usuario, wpm, precisao)
@@ -724,19 +721,74 @@ class InterfaceJogo:
             self.atualizar_ranking_lateral()
         elif self.sessao_multi:
             self.sessao_multi.adicionar_resultado(self.usuario, pontos, wpm, precisao, tempo_gasto)
+            
+            # ✅ MENSAGEM PARA PRÓXIMO JOGADOR
+            if not self.sessao_multi.sessao_completa():
+                proximo_numero = self.sessao_multi.jogador_atual
+                
+                frame_proximo = tk.Frame(self.frame_resultado, bg=config.COR_INFO, padx=15, pady=10)
+                frame_proximo.pack(pady=8, fill="x", padx=10)
+                
+                tk.Label(
+                    frame_proximo,
+                    text=f"👉 Aguardando Jogador {proximo_numero}",
+                    font=("Segoe UI", 16, "bold"),
+                    bg=config.COR_INFO,
+                    fg=config.COR_BOTAO_TEXTO
+                ).pack()
+                
+                tk.Label(
+                    frame_proximo,
+                    text="Clique em 'Próximo Jogador' quando estiver pronto!",
+                    font=("Segoe UI", 12),
+                    bg=config.COR_INFO,
+                    fg=config.COR_BOTAO_TEXTO
+                ).pack(pady=(5, 0))
+            else:
+                # Último jogador - todos já jogaram
+                frame_final = tk.Frame(self.frame_resultado, bg=config.COR_SUCESSO, padx=15, pady=10)
+                frame_final.pack(pady=8, fill="x", padx=10)
+                
+                tk.Label(
+                    frame_final,
+                    text="✅ Todos os jogadores terminaram!",
+                    font=("Segoe UI", 16, "bold"),
+                    bg=config.COR_SUCESSO,
+                    fg=config.COR_BOTAO_TEXTO
+                ).pack()
+                
+                tk.Label(
+                    frame_final,
+                    text="Clique em 'Ver Resultados' para ver o ranking final!",
+                    font=("Segoe UI", 12),
+                    bg=config.COR_SUCESSO,
+                    fg=config.COR_BOTAO_TEXTO
+                ).pack(pady=(5, 0))
         
         # =============== BOTÕES FINAIS ===============
         self.mostrar_botoes_finais()
-    
+
     def mostrar_xp_ganho(self, xp_ganho, subiu_nivel, novo_nivel, xp_atual):
-        """Mostra XP ganho e se subiu de nível"""
-        xp_frame = tk.Frame(self.frame_resultado, bg=config.COR_INFO, padx=20, pady=10)
-        xp_frame.pack(pady=10, fill="x")
+        """Mostra XP ganho - COMPACTO"""
+        xp_frame = tk.Frame(self.frame_resultado, bg=config.COR_INFO, padx=12, pady=6)
+        xp_frame.pack(pady=4, fill="x", padx=10)
         
         if subiu_nivel:
-            tk.Label(xp_frame, text=f"🎉 SUBIU DE NÍVEL! Agora você é {novo_nivel[2]} {novo_nivel[1]}!", font=config.FONTE_TEXTO_GRANDE, bg=config.COR_INFO, fg=config.COR_BOTAO_TEXTO).pack(pady=(0, 5))
+            tk.Label(
+                xp_frame, 
+                text=f"🎉 NÍVEL UP! {novo_nivel[2]} {novo_nivel[1]}!",
+                font=("Segoe UI", 13, "bold"),
+                bg=config.COR_INFO, 
+                fg=config.COR_BOTAO_TEXTO
+            ).pack()
         
-        tk.Label(xp_frame, text=f"⭐ +{xp_ganho} XP ganhos nesta partida!", font=config.FONTE_TEXTO, bg=config.COR_INFO, fg=config.COR_BOTAO_TEXTO).pack()
+        tk.Label(
+            xp_frame, 
+            text=f"⭐ +{xp_ganho} XP",
+            font=("Segoe UI", 11),
+            bg=config.COR_INFO, 
+            fg=config.COR_BOTAO_TEXTO
+        ).pack()
         
         nivel_atual = config.calcular_nivel(xp_atual)
         xp_faltante = config.xp_para_proximo_nivel(xp_atual)
@@ -744,38 +796,57 @@ class InterfaceJogo:
         if xp_faltante > 0:
             info_text = f"Nível: {nivel_atual[2]} {nivel_atual[1]} | XP: {xp_atual} | Faltam {xp_faltante} XP para próximo nível"
         else:
-            info_text = f"Nível MÁXIMO: {nivel_atual[2]} {nivel_atual[1]} | XP: {xp_atual}"
+            info_text = f"NÍVEL MÁXIMO | XP: {xp_atual}"
         
-        tk.Label(xp_frame, text=info_text, font=config.FONTE_MINI, bg=config.COR_INFO, fg=config.COR_BOTAO_TEXTO).pack(pady=(5, 0))
-    
+        tk.Label(
+            xp_frame, 
+            text=info_text,
+            font=("Segoe UI", 9),
+            bg=config.COR_INFO, 
+            fg=config.COR_BOTAO_TEXTO
+        ).pack(pady=(2, 0))
+
     def mostrar_conquistas_desbloqueadas(self, conquistas_ids):
-        """Mostra popup de conquistas desbloqueadas"""
+        """Mostra conquistas - COMPACTO"""
         for conquista_id in conquistas_ids:
             conquista_info = config.CONQUISTAS.get(conquista_id, {})
-            frame_conquista = tk.Frame(self.frame_resultado, bg=config.COR_OURO, padx=20, pady=10)
-            frame_conquista.pack(pady=5, fill="x")
             
-            label_conquista = tk.Label(
+            frame_conquista = tk.Frame(self.frame_resultado, bg=config.COR_OURO, padx=12, pady=5)
+            frame_conquista.pack(pady=3, fill="x", padx=10)
+            
+            tk.Label(
                 frame_conquista,
-                text=f"🏆 Conquista Desbloqueada: {conquista_info.get('nome', '')} (+{conquista_info.get('xp', 0)} XP)",
-                font=config.FONTE_TEXTO,
+                text=f"🏆 {conquista_info.get('nome', '')} (+{conquista_info.get('xp', 0)} XP)",
+                font=("Segoe UI", 11),
                 bg=config.COR_OURO,
                 fg="#000000"
-            )
-            label_conquista.pack()
-            
-            self.root.after(3000, frame_conquista.destroy)
-    
+            ).pack()
+
     def mostrar_botoes_finais(self):
-        """Mostra botões de repetir e voltar ao menu"""
+        """Mostra botões finais"""
         for w in self.frame_botoes_finais.winfo_children():
             w.destroy()
         
+        # ✅ VERIFICA SE É MULTIPLAYER
+        if self.sessao_multi:
+            # Verifica se é o último jogador
+            if self.sessao_multi.sessao_completa():
+                texto_botao = "📊 Ver Resultados Finais"
+                cor_botao = config.COR_BOTAO
+            else:
+                proximo_numero = self.sessao_multi.jogador_atual
+                texto_botao = f"➡️ Próximo: Jogador {proximo_numero}"
+                cor_botao = config.COR_SUCESSO
+        else:
+            # Modo solo
+            texto_botao = "🔄 Jogar Novamente"
+            cor_botao = config.COR_BOTAO
+        
         btn_repetir = tk.Button(
             self.frame_botoes_finais,
-            text="🔄 Jogar Novamente",
-            font=config.FONTE_TEXTO,
-            bg=config.COR_BOTAO,
+            text=texto_botao,
+            font=("Segoe UI", 13),
+            bg=cor_botao,
             fg=config.COR_BOTAO_TEXTO,
             activebackground=config.COR_BOTAO_HOVER,
             activeforeground=config.COR_BOTAO_TEXTO,
@@ -783,17 +854,19 @@ class InterfaceJogo:
             bd=0,
             cursor="hand2",
             command=self.on_fim,
-            width=20,
-            height=2
+            width=25,
+            height=1,
+            pady=8
         )
-        btn_repetir.pack(side="left", padx=10)
+        btn_repetir.pack(side="left", padx=8)
+        
         btn_repetir.bind("<Enter>", lambda e: btn_repetir.config(bg=config.COR_BOTAO_HOVER))
-        btn_repetir.bind("<Leave>", lambda e: btn_repetir.config(bg=config.COR_BOTAO))
+        btn_repetir.bind("<Leave>", lambda e: btn_repetir.config(bg=cor_botao))
         
         btn_menu = tk.Button(
             self.frame_botoes_finais,
             text="🏠 Menu Principal",
-            font=config.FONTE_TEXTO,
+            font=("Segoe UI", 13),
             bg=config.COR_BOTAO_SECUNDARIO,
             fg=config.COR_BOTAO_TEXTO,
             activebackground=config.COR_BOTAO_HOVER,
@@ -802,9 +875,11 @@ class InterfaceJogo:
             bd=0,
             cursor="hand2",
             command=self.on_voltar_menu,
-            width=20,
-            height=2
+            width=18,
+            height=1,
+            pady=8
         )
-        btn_menu.pack(side="left", padx=10)
+        btn_menu.pack(side="left", padx=8)
+        
         btn_menu.bind("<Enter>", lambda e: btn_menu.config(bg=config.COR_BOTAO_HOVER))
         btn_menu.bind("<Leave>", lambda e: btn_menu.config(bg=config.COR_BOTAO_SECUNDARIO))
