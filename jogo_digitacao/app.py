@@ -15,6 +15,7 @@ class App:
         self.root.geometry(config.TELA)
         self.root.minsize(config.TELA_MIN_WIDTH, config.TELA_MIN_HEIGHT)
         self.root.configure(bg=config.COR_FUNDO)
+        
         self.fullscreen = False
         self.root.bind("<F11>", self.toggle_fullscreen)
         self.root.bind("<Escape>", self.sair_fullscreen)
@@ -22,9 +23,10 @@ class App:
         self.frame_atual = None
         self.usuario_logado = None
         self.modo_jogo = tk.StringVar(value="normal")
-        self.tipo_teclado_selecionado = "pt" 
+        self.tipo_teclado_selecionado = "pt"
         self.categoria_selecionada = None
         self.texto_personalizado = None
+        
         self.sessao_multi = None
         self.jogadores_multi = []
         self.num_jogadores_multi = 0
@@ -105,6 +107,7 @@ class App:
             command=comando,
             cursor="hand2"
         )
+        
         btn.bind("<Enter>", lambda e: btn.config(bg=config.COR_BOTAO_HOVER))
         btn.bind("<Leave>", lambda e: btn.config(bg=cor_bg))
         return btn
@@ -112,6 +115,7 @@ class App:
     # =============== TELA INICIAL ===============
     def mostrar_tela_inicial(self):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -168,6 +172,7 @@ class App:
     # =============== TELA LOGIN ===============
     def mostrar_form_login(self, modo="entrar"):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -249,6 +254,7 @@ class App:
         def acao_entrar():
             u = entry_user.get()
             p = entry_pwd.get()
+            
             if not u or not p:
                 lbl_msg.config(text="⚠️ Preencha todos os campos!", fg=config.COR_AVISO)
                 return
@@ -263,6 +269,7 @@ class App:
         def acao_registrar():
             u = entry_user.get()
             p = entry_pwd.get()
+            
             if not u or not p:
                 lbl_msg.config(text="⚠️ Preencha todos os campos!", fg=config.COR_AVISO)
                 return
@@ -286,9 +293,11 @@ class App:
             card, "← Voltar", self.mostrar_tela_inicial,
             config.COR_BOTAO_SECUNDARIO, 25
         ).pack(pady=5)
-    # =============== TELA MODO (SEM TREMOR - CORRIGIDO) ===============
+    
+    # =============== TELA MODO ===============
     def mostrar_tela_modo(self):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -354,12 +363,11 @@ class App:
             else:
                 cor_modo = config.COR_HARDCORE
             
-           
             frame_modo = tk.Frame(
                 card,
                 bg=config.COR_CARD_DESTAQUE,
                 bd=0,
-                highlightthickness=2, 
+                highlightthickness=2,
                 highlightbackground=config.COR_FRAME_BORDA
             )
             frame_modo.pack(pady=8, fill="x", padx=10)
@@ -430,12 +438,12 @@ class App:
     # =============== TELA CONQUISTAS ===============
     def mostrar_conquistas(self):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
         
         self.mostrar_logo_global()
-        
         self.root.bind("<Escape>", lambda e: [self.root.unbind("<Escape>"), self.mostrar_tela_modo()])
         
         card = tk.Frame(
@@ -562,6 +570,7 @@ class App:
     def mostrar_menu_tipo_jogo(self):
         """Menu para escolher entre solo ou multiplayer"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -599,7 +608,7 @@ class App:
             bg=config.COR_FRAME,
             fg=config.COR_TEXTO
         ).pack(pady=(0, 30))
-
+        
         self.criar_botao_moderno(
             card, "👤 Solo (Sozinho)",
             self.mostrar_tela_categoria,
@@ -620,6 +629,7 @@ class App:
     # =============== CONFIGURAÇÃO MULTIPLAYER ===============
     def mostrar_config_multiplayer(self):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -711,6 +721,7 @@ class App:
     def mostrar_login_multiplayer(self, numero_jogador):
         """Tela de login para cada jogador do multiplayer"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -807,6 +818,7 @@ class App:
         def fazer_login():
             u = entry_user.get()
             p = entry_pwd.get()
+            
             if not u or not p:
                 lbl_msg.config(text="⚠️ Preencha todos os campos!", fg=config.COR_AVISO)
                 return
@@ -860,6 +872,7 @@ class App:
     def mostrar_tela_categoria(self):
         """Tela para escolher categoria ou texto personalizado"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -910,9 +923,11 @@ class App:
             card, "← Voltar", self.mostrar_menu_tipo_jogo,
             config.COR_BOTAO_SECUNDARIO, 30
         ).pack(pady=(15, 0))
+    
     def mostrar_tela_categoria_multi(self, num_jogadores):
         """Tela categoria para multiplayer"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -993,6 +1008,7 @@ class App:
     def mostrar_tela_texto_personalizado(self):
         """Tela para digitar texto personalizado"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -1055,6 +1071,7 @@ class App:
             if len(texto) < 10:
                 lbl_aviso.config(text="⚠️ O texto deve ter pelo menos 10 caracteres!")
                 return
+            
             self.texto_personalizado = texto
             self.categoria_selecionada = None
             self.mostrar_tela_jogo(self.tipo_teclado_selecionado)
@@ -1073,6 +1090,7 @@ class App:
     def mostrar_tela_texto_personalizado_multi(self, num_jogadores):
         """Tela para digitar texto personalizado (multiplayer)"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -1159,13 +1177,13 @@ class App:
     # =============== TELA JOGO ===============
     def mostrar_tela_jogo(self, tipo_teclado):
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
         
         self.esconder_logo_global()
         
-        # Gera texto
         if self.texto_personalizado:
             texto = self.texto_personalizado
         elif self.categoria_selecionada:
@@ -1189,45 +1207,89 @@ class App:
             logo_img=None,
             sessao_multi=None
         )
+        
         jogo.definir_texto(texto)
     
     def mostrar_tela_jogo_multi(self):
-        """Mostra tela de jogo multiplayer"""
+        """Mostra tela de jogo multiplayer - CORRIGIDO"""
         self.limpar_tela()
-        frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
-        frame_fundo.pack(expand=True, fill="both")
-        self.frame_atual = frame_fundo
         
-        # ✅ ESCONDE A LOGO NA TELA DE JOGO
-        self.esconder_logo_global()
-        
+        # Verifica se todos já jogaram
         if self.sessao_multi.sessao_completa():
             self.mostrar_resultado_multiplayer()
             return
         
+        # Cria novo frame para este jogador
+        frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
+        frame_fundo.pack(expand=True, fill="both")
+        self.frame_atual = frame_fundo
+        
+        # Esconde logo
+        self.esconder_logo_global()
+        
+        # Informações do jogador atual
         jogador_atual_info = self.jogadores_multi[self.sessao_multi.jogador_atual - 1]
         
-        frame_info_jogador = tk.Frame(frame_fundo, bg=config.COR_INFO, pady=10)
+        # Banner com informação do jogador
+        frame_info_jogador = tk.Frame(frame_fundo, bg=config.COR_INFO, pady=15)
         frame_info_jogador.pack(fill="x", side="top")
         
         tk.Label(
             frame_info_jogador,
-            text=f"🎮 Vez de: {jogador_atual_info['usuario']} (Jogador {jogador_atual_info['numero']})",
+            text=f"🎮 Jogador {jogador_atual_info['numero']} de {self.sessao_multi.num_jogadores}",
             font=config.FONTE_SUBTITULO,
             bg=config.COR_INFO,
             fg=config.COR_BOTAO_TEXTO
         ).pack()
         
+        tk.Label(
+            frame_info_jogador,
+            text=f"👤 {jogador_atual_info['usuario']}",
+            font=("Segoe UI", 20, "bold"),
+            bg=config.COR_INFO,
+            fg=config.COR_TEXTO_DESTAQUE
+        ).pack(pady=(5, 0))
+        
+        # Mostra quem já jogou
+        if self.sessao_multi.resultados:
+            resultados_text = " | ".join([
+                f"{r['jogador']}: {r['pontos']} pts"
+                for r in self.sessao_multi.resultados
+            ])
+            tk.Label(
+                frame_info_jogador,
+                text=f"📊 Resultados: {resultados_text}",
+                font=config.FONTE_MINI,
+                bg=config.COR_INFO,
+                fg=config.COR_BOTAO_TEXTO
+            ).pack(pady=(8, 0))
+        
+        # Frame para o jogo (separado do banner)
+        frame_jogo = tk.Frame(frame_fundo, bg=config.COR_FUNDO)
+        frame_jogo.pack(expand=True, fill="both")
+        
         def proximo_jogador():
+            # Limpa bindings do jogo anterior
+            self.root.unbind_all("<KeyRelease>")
+            self.root.unbind_all("<Return>")
+            self.root.unbind_all("<space>")
+            
+            # Mostra próximo jogador ou resultado final
             self.mostrar_tela_jogo_multi()
         
         def voltar_menu():
+            # Limpa bindings
+            self.root.unbind_all("<KeyRelease>")
+            self.root.unbind_all("<Return>")
+            self.root.unbind_all("<space>")
+            
             self.sessao_multi = None
             self.jogadores_multi = []
             self.mostrar_tela_modo()
         
+        # Cria interface de jogo para este jogador
         jogo = InterfaceJogo(
-            frame_fundo,
+            frame_jogo,  # ✅ Frame separado para cada jogador
             self.sessao_multi.tipo_teclado,
             self.sessao_multi.modo_jogo,
             on_fim=proximo_jogador,
@@ -1236,11 +1298,12 @@ class App:
             logo_img=None,
             sessao_multi=self.sessao_multi
         )
+        
         jogo.definir_texto(self.sessao_multi.texto)
     
     def mostrar_resultado_multiplayer(self):
-        """Mostra resultado final do multiplayer"""
         self.limpar_tela()
+        
         frame_fundo = tk.Frame(self.root, bg=config.COR_FUNDO)
         frame_fundo.pack(expand=True, fill="both")
         self.frame_atual = frame_fundo
@@ -1348,7 +1411,6 @@ class App:
         ).pack(side="left", padx=5)
     
     def reiniciar_multiplayer(self):
-        """Reinicia partida multiplayer"""
         num_jogadores = self.sessao_multi.num_jogadores
         self.sessao_multi = None
         self.jogadores_multi = []
