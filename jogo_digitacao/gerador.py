@@ -18,6 +18,8 @@ FRASES_PADRAO = [
 ]
 
 def carregar_frases():
+    """Carrega frases do arquivo frases.txt ou usa frases padrão"""
+    # Tenta carregar do arquivo
     if os.path.exists(ARQUIVO_FRASES):
         try:
             with open(ARQUIVO_FRASES, "r", encoding="utf-8") as arquivo:
@@ -27,10 +29,12 @@ def carregar_frases():
         except Exception as e:
             print(f"⚠️ Erro ao carregar frases: {e}")
     
+    # Se não conseguiu carregar, cria o arquivo com frases padrão
     criar_arquivo_frases_padrao()
     return FRASES_PADRAO
 
 def criar_arquivo_frases_padrao():
+    """Cria arquivo frases.txt com frases padrão"""
     try:
         with open(ARQUIVO_FRASES, "w", encoding="utf-8") as arquivo:
             for frase in FRASES_PADRAO:
@@ -40,10 +44,12 @@ def criar_arquivo_frases_padrao():
         print(f"❌ Erro ao criar arquivo de frases: {e}")
 
 def gerar_texto():
+    """Retorna uma frase aleatória para o jogo"""
     frases = carregar_frases()
     return random.choice(frases)
 
 def adicionar_frase(nova_frase):
+    """Adiciona uma nova frase ao arquivo"""
     try:
         with open(ARQUIVO_FRASES, "a", encoding="utf-8") as arquivo:
             arquivo.write(nova_frase.strip() + "\n")
@@ -54,5 +60,6 @@ def adicionar_frase(nova_frase):
         return False
 
 def obter_total_frases():
+    """Retorna o número total de frases disponíveis"""
     frases = carregar_frases()
     return len(frases)
