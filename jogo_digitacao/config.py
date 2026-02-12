@@ -1,16 +1,40 @@
-# ==================== CONFIGURAÇÕES DE TELA ====================
-TELA = "1400x800"
-TELA_MIN_WIDTH = 1200
-TELA_MIN_HEIGHT = 700
+import tkinter as tk
 
-# ==================== FONTES MODERNAS ====================
-FONTE_TITULO = ("Segoe UI", 36, "bold")
-FONTE_SUBTITULO = ("Segoe UI", 20, "bold")
-FONTE_TEXTO = ("Segoe UI", 18)
-FONTE_TEXTO_GRANDE = ("Segoe UI", 22)
-FONTE_MONO = ("Consolas", 20)
-FONTE_STATS = ("Segoe UI", 16)
-FONTE_MINI = ("Segoe UI", 14)
+# ==================== DETECÇÃO AUTOMÁTICA DE RESOLUÇÃO ====================
+def obter_resolucao_tela():
+    """Detecta a resolução da tela automaticamente"""
+    root = tk.Tk()
+    root.withdraw()  # Esconde a janela temporária
+    largura = root.winfo_screenwidth()
+    altura = root.winfo_screenheight()
+    root.destroy()
+    return largura, altura
+
+# Detecta resolução
+LARGURA_TELA, ALTURA_TELA = obter_resolucao_tela()
+
+# Define tamanho da janela como 90% da tela (para não ficar fullscreen)
+LARGURA_JANELA = int(LARGURA_TELA * 0.9)
+ALTURA_JANELA = int(ALTURA_TELA * 0.85)
+
+TELA = f"{LARGURA_JANELA}x{ALTURA_JANELA}"
+TELA_MIN_WIDTH = 800
+TELA_MIN_HEIGHT = 600
+
+# ==================== FONTES RESPONSIVAS ====================
+# Calcula tamanhos de fonte baseados na resolução
+def calcular_tamanho_fonte(tamanho_base):
+    """Ajusta tamanho da fonte baseado na resolução"""
+    fator = min(LARGURA_TELA / 1920, ALTURA_TELA / 1080)
+    return max(8, int(tamanho_base * fator))
+
+FONTE_TITULO = ("Segoe UI", calcular_tamanho_fonte(36), "bold")
+FONTE_SUBTITULO = ("Segoe UI", calcular_tamanho_fonte(20), "bold")
+FONTE_TEXTO = ("Segoe UI", calcular_tamanho_fonte(18))
+FONTE_TEXTO_GRANDE = ("Segoe UI", calcular_tamanho_fonte(22))
+FONTE_MONO = ("Consolas", calcular_tamanho_fonte(20))
+FONTE_STATS = ("Segoe UI", calcular_tamanho_fonte(16))
+FONTE_MINI = ("Segoe UI", calcular_tamanho_fonte(14))
 
 # ==================== PALETA DE CORES MODERNA ====================
 COR_FUNDO = "#0f172a"
@@ -43,6 +67,7 @@ COR_HARDCORE = "#ef4444"
 COR_OURO = "#fbbf24"
 COR_PRATA = "#94a3b8"
 COR_BRONZE = "#f97316"
+
 COR_PROGRESSO = "#3b82f6"
 COR_PROGRESSO_BG = "#1e293b"
 
@@ -54,6 +79,7 @@ COR_COMBO_5 = "#ef4444"
 
 # ==================== TEMPO E MODOS ====================
 TEMPO = 60
+
 MODOS_JOGO = [
     ("normal", "Normal"),
     ("morte_subita", "Morte Súbita"),
@@ -99,8 +125,8 @@ PESOS_PONTOS = {
 
 # ==================== SISTEMA DE XP E NÍVEIS ====================
 XP_POR_PARTIDA = 10
-XP_POR_WPM = 2 
-XP_POR_PRECISAO = 1  
+XP_POR_WPM = 2  # 2 XP por cada WPM
+XP_POR_PRECISAO = 1  # 1 XP por cada % de precisão
 XP_BONUS_PERFEITO = 50
 
 NIVEIS = [
@@ -164,6 +190,7 @@ SOM_VITORIA = "sounds/win.wav"
 
 # ==================== RANKINGS ====================
 RANKING_TOP_EXIBIR = 10
+
 RANKING_CORES_POSICAO = {
     1: COR_OURO,
     2: COR_PRATA,
