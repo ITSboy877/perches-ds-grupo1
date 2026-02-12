@@ -61,10 +61,12 @@ CATEGORIAS = {
 }
 
 def gerar_texto_categoria(categoria):
+    """Gera texto aleatório de uma categoria"""
     if categoria in CATEGORIAS:
         return random.choice(CATEGORIAS[categoria]["textos"])
     return "Texto padrão para digitação."
 
 def obter_categorias():
+    """Retorna lista de categorias disponíveis"""
     return [(cat_id, info["nome"], info["icone"]) 
             for cat_id, info in CATEGORIAS.items()]
