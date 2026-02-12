@@ -47,7 +47,7 @@ def cadastrar_usuario(usuario, senha):
         "melhor_wpm": 0,
         "melhor_precisao": 0,
         "conquistas": [],
-        "xp": 0 
+        "xp": 0  # NOVO
     }
     
     dados["usuarios"].append(novo_usuario)
@@ -86,6 +86,7 @@ def adicionar_conquista(usuario, conquista_id):
                 u["conquistas"] = []
             if conquista_id not in u["conquistas"]:
                 u["conquistas"].append(conquista_id)
+                # Ganha XP pela conquista
                 conquista_info = config.CONQUISTAS.get(conquista_id, {})
                 xp_ganho = conquista_info.get("xp", 0)
             break
@@ -107,12 +108,14 @@ def ganhar_xp(usuario, xp_ganho):
             
             salvar_usuarios(dados)
             
+            # Retorna se subiu de nível
             if nivel_antes[1] != nivel_depois[1]:
                 return True, nivel_depois, u["xp"]
             return False, None, u["xp"]
     return False, None, 0
 
 def obter_stats_usuario(usuario):
+    """Retorna estatísticas do usuário"""
     dados = carregar_usuarios()
     for u in dados["usuarios"]:
         if u["usuario"].lower() == usuario.lower():
@@ -121,6 +124,6 @@ def obter_stats_usuario(usuario):
                 "melhor_wpm": u.get("melhor_wpm", 0),
                 "melhor_precisao": u.get("melhor_precisao", 0),
                 "conquistas": u.get("conquistas", []),
-                "xp": u.get("xp", 0)
+                "xp": u.get("xp", 0)  # NOVO
             }
     return None
